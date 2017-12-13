@@ -1,4 +1,4 @@
-import pygame,math,sys
+import pygame,random,math,sys
 
 class Entity:
  def __init__(self,app,*args):
@@ -15,6 +15,27 @@ class Entity:
    self.draw()
    self.needrender=False
   return self.surface
+
+
+class Nazi(Entity):
+ def init(self,x,y):
+  self.x=x
+  self.y=y
+  self.width=self.height=16
+ def update(self):
+  x=self.x-self.app.player.x
+  y=self.y-self.app.player.y
+  dir=math.atan2(y,x)
+  self.dx=math.cos(dir)*2
+  self.dy=math.sin(dir)*2
+  self.x-=self.dx
+  self.y-=self.dy
+  if not random.randint(0,128):
+   self.shoot()
+ def shoot(self):
+  self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
+ def draw(self):
+  self.surface.fill((127,0,0))
    
    
 class Bullet(Entity):
@@ -64,7 +85,7 @@ class Application:
   self.clock=pygame.time.Clock()
  def init(self):
   self.player=Player(self)
-  self.entities=[self.player,]
+  self.entities=[self.player,Nazi(self,0,0)]
  def update(self):
   for event in pygame.event.get():
    if event.type==pygame.QUIT:
