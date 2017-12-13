@@ -144,6 +144,19 @@ class Target(Entity):
     
  def draw(self):
   self.surface.fill((0,127,0))
+  
+
+class Exit(Entity):
+ def init(self,x,y):
+  self.width=self.height=32
+  self.x=x
+  self.y=y
+ def update(self):
+  if self.app.target.destructionmode:
+   if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
+    self.app.gameover=True
+ def draw(self):
+  self.surface.fill((0,127,127))
     
 class Bullet(Entity):
  def init(self,x,y,dx,dy):
@@ -217,7 +230,7 @@ class Application:
   self.gameover=False
   self.player=Player(self)
   self.target=Target(self,640,240)
-  self.entities=[self.target,]
+  self.entities=[Exit(self,320,240),self.target]
   for i in range(4):
    x=random.randint(0,self.display.get_width())
    y=random.randint(0,self.display.get_height())
@@ -268,8 +281,8 @@ class Application:
     value=(pygame.time.get_ticks()-self.target.destructionstart)/3000.0
     self.display.fill((0,127,0),(0,0,int(self.display.get_width()*value),16))
   else:
-    value=(pygame.time.get_ticks()-self.target.destructionstart-3000)/7000.0
-    self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
+   value=(pygame.time.get_ticks()-self.target.destructionstart-3000)/7000.0
+   self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
  def render(self):
   self.display.fill((0,0,0))
   for entity in self.entities:
