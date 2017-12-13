@@ -3,7 +3,7 @@ import pygame,random,math,sys
 class Entity:
  def __init__(self,app,*args):
   self.app=app
-  self.needrender=True
+  self.redraw=True
   self.vision=0
   self.init(*args)
  def init(self):
@@ -11,10 +11,10 @@ class Entity:
  def update(self):
   pass
  def render(self):
-  if self.needrender:
+  if self.redraw:
    self.surface=pygame.Surface((self.width,self.height))
    self.draw()
-   self.needrender=False
+   self.redraw=False
   return self.surface
 
 
@@ -22,6 +22,8 @@ class Nazi(Entity):
  def init(self,x,y):
   self.x=x
   self.y=y
+  self.dx=self.dy=0
+  self.dir=random.random()*math.pi*2
   self.width=self.height=16
   self.awake=False
   self.vision=128
@@ -30,21 +32,32 @@ class Nazi(Entity):
    distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
    if distance<self.vision**2:
     self.awake=True
+    self.redraw=True
    else:
-    return
-  x=self.x-self.app.player.x
-  y=self.y-self.app.player.y
-  dir=math.atan2(y,x)
-  self.dx=math.cos(dir)*2
-  self.dy=math.sin(dir)*2
+    self.dir+=(random.random()*2-1)/4
+  else:
+   x=self.x-self.app.player.x
+   y=self.y-self.app.player.y
+   self.dir=math.atan2(y,x)
+   if not random.randint(0,128):
+    self.shoot()
+  self.dx=math.cos(self.dir)*2
+  self.dy=math.sin(self.dir)*2
+  if self.awake:
+   self.dx*=1
+   self.dy*=1
+  else:
+   self.dx*=0.5
+   self.dy*=0.5
   self.x-=self.dx
   self.y-=self.dy
-  if not random.randint(0,128):
-   self.shoot()
  def shoot(self):
   self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
  def draw(self):
-  self.surface.fill((255,0,0))
+  if self.awake:
+   self.surface.fill((255,0,0))
+  else:
+   self.surface.fill((127,0,0))
    
    
 class Bullet(Entity):
