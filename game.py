@@ -35,6 +35,13 @@ class Nazi(Entity):
     self.redraw=True
    self.awake=True
    self.lastawake=pygame.time.get_ticks()
+   for entity in self.app.entities:
+    if entity.vision>0 and entity.awake==False:
+     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
+     if distance<(self.vision+entity.vision)**2:
+      entity.awake=True
+      entity.lastawake=self.lastawake
+      entity.redraw=True
   elif self.awake:
    if pygame.time.get_ticks()-self.lastawake>3000:
     self.awake=False
@@ -113,7 +120,11 @@ class Application:
   self.clock=pygame.time.Clock()
  def init(self):
   self.player=Player(self)
-  self.entities=[self.player,Nazi(self,160,120)]
+  self.entities=[self.player,]
+  for i in range(4):
+   x=random.randint(0,self.display.get_width())
+   y=random.randint(0,self.display.get_height())
+   self.entities.append(Nazi(self,x,y))
  def update(self):
   for event in pygame.event.get():
    if event.type==pygame.QUIT:
@@ -138,7 +149,13 @@ class Application:
   self.display.fill((0,0,0))
   for entity in self.entities:
    if entity.vision:
-    pygame.draw.circle(self.display,(127,127,0),(int(entity.x),int(entity.y)),128,0)
+    surface=pygame.Surface((256,256),pygame.SRCALPHA)
+    surface.fill((0,0,0,0))
+    if entity.awake:
+     pygame.draw.circle(surface,(255,255,0,127),(128,128),128,0)
+    else:
+     pygame.draw.circle(surface,(127,127,0,127),(128,128),128,0)
+    self.display.blit(surface,(int(entity.x-128),int(entity.y-128)))
   for entity in self.entities:
    surface=entity.render()
    self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
