@@ -99,21 +99,21 @@ class Wall(Entity):
   for entity in self.app.entities:
    if entity.solid:
     continue
-   if self.x-(self.width+entity.width)<entity.x<self.x+self.width+entity.width:
-    if self.y-(self.height+entity.height)<entity.y<self.y+self.height+entity.height:
+   if self.x-(entity.width+self.width/2)<entity.x<self.x+self.width/2+entity.width:
+    if self.y-(entity.height+self.height/2)<entity.y<self.y+self.height/2+entity.height:
      if entity.isbullet:
       self.app.entities.remove(entity)
       return
      if self.width<self.height:
       if entity.x<self.x:
-       entity.x=self.x-(self.width+entity.width)
+       entity.x=self.x-(entity.width)-8
       if entity.x>self.x:
-       entity.x=self.x+(self.width+entity.width)
+       entity.x=self.x+(entity.width)+8
      else:
       if entity.y<self.y:
-       entity.y=self.y-(self.height+entity.height)
+       entity.y=self.y-(entity.height)-8
       if entity.y>self.y:
-       entity.y=self.y+(self.height+entity.height)
+       entity.y=self.y+(entity.height)+8
  def draw(self):
   self.surface.fill((127,127,127))
    
@@ -197,7 +197,7 @@ class Application:
    x=random.randint(0,self.display.get_width())
    y=random.randint(0,self.display.get_height())
    self.entities.append(Box(self,x,y))
-  for box in ((0,0,WIDTH,16),(0,0,16,HEIGHT),(0,HEIGHT-16,WIDTH,16),(WIDTH-16,0,16,HEIGHT)):
+  for box in ((0,0,WIDTH,16),(0,0,16,HEIGHT),(0,HEIGHT-16,WIDTH,16),(WIDTH-16,0,16,HEIGHT),(WIDTH/2-8,0,16,HEIGHT/2)):
    self.entities.append(Wall(self,*box))
   self.entities.append(self.player)
  def update(self):
