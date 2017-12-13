@@ -100,7 +100,7 @@ class Box(Entity):
  def update(self):
   if self.x-self.width/2-self.app.player.width<self.app.player.x<self.x+self.width/2+self.app.player.width:
    if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
-    self.app.player.bullets+=random.randint(8,16)
+    self.app.player.bullets+=random.randint(4,8)
     self.app.entities.remove(self) 
  def draw(self):
   self.surface.fill((127,0,255))
