@@ -2,44 +2,54 @@ import pygame,random,math,sys
 
 class Entity:
  def __init__(self,app,*args):
-  self.app=app
-  self.redraw=True
-  self.vision=0
-  self.init(*args)
- def init(self):
-  pass
- def update(self):
-  pass
- def render(self):
-  if self.redraw:
-   self.surface=pygame.Surface((self.width,self.height))
-   self.draw()
-   self.redraw=False
-  return self.surface
-
-
-class Nazi(Entity):
- def init(self,x,y):
-  self.x=x
-  self.y=y
+  self.solid=False
+  self.isbullet=False
   self.dx=self.dy=0
-  self.dir=random.random()*math.pi*2
-  self.width=self.height=16
-  self.awake=False
+  self.app=app     #  keep reference to application
+  self.redraw=True #  if we need to redraw the sprite
+  self.vision=0    #  the field of vision of the guardians
+  self.init(*args) #  send the other arguments for the init
+ def init(self):   # run the instance-specific init code
+  pass
+ def update(self): # do the object housekeeping code
+  pass
+ def render(self): # executed once per frame to render the sprite
+  if self.redraw:  #  if we need to redraw the sprite
+   self.surface=pygame.Surface((self.width,self.height)) #   then create a new surface for it
+   self.draw()     #  execute the instance-specific drawing code
+   self.redraw=False  #   and the redraw is now done
+  return self.surface #  return our (newly-drawn or not) sprite
+
+
+class Nazi(Entity):  # the guardians that goes after you
+ def init(self,x,y):  # initialize the nazi
+  self.x=x            #  register our start position
+  self.y=y
+  self.dx=self.dy=0   #  the horizontal and vertical speed
+  self.dir=random.random()*math.pi*2  # the direction
+  self.width=self.height=16 #  width and height
+  self.awake=False    #  if we are chasing a player
   self.vision=128
-  self.lastawake=0
+  #  the field of vision
+  self.lastawake=0    #  the last time that we were awaken
  def update(self):
+   # look how far away the player is
   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
+   # if we see the player
   if distance<self.vision**2:
+    # if we were patrolling
    if self.awake==False:
+      #  fire a redraw
     self.redraw=True
+    # keep awake
    self.awake=True
    self.lastawake=pygame.time.get_ticks()
+    # test if there are any other guards near to awaken
    for entity in self.app.entities:
-    if entity.vision>0 and entity.awake==False:
+    if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
      distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-     if distance<(self.vision+entity.vision)**2:
-      entity.awake=True
+     if distance<(self.vision+entity.vision)**2: # if he is close enough
+      entity.awake=True  #  awaken him
       entity.lastawake=self.lastawake
       entity.redraw=True
   elif self.awake:
@@ -47,7 +57,12 @@ class Nazi(Entity):
     self.awake=False
     self.redraw=True
   if not self.awake:
-   self.dir+=(random.random()*2-1)/4
+   self.dir+=(random.random()*2-1)/8
+   for entity in self.app.entities:
+    if entity.isbullet: # if a bullet is flying by
+     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
+     if distance<self.vision**2: # if it is close enough
+      self.dir=math.atan2(entity.dy,entity.dx) # look what is happening here
   else:
    x=self.x-self.app.player.x
    y=self.y-self.app.player.y
@@ -71,6 +86,36 @@ class Nazi(Entity):
    self.surface.fill((255,0,0))
   else:
    self.surface.fill((127,0,0))
+
+
+class Wall(Entity):
+ def init(self,x,y,width,height):
+  self.x=x+width/2
+  self.y=y+height/2
+  self.width=width
+  self.height=height
+  self.solid=True
+ def update(self):
+  for entity in self.app.entities:
+   if entity.solid:
+    continue
+   if self.x-(self.width+entity.width)<entity.x<self.x+self.width+entity.width:
+    if self.y-(self.height+entity.height)<entity.y<self.y+self.height+entity.height:
+     if entity.isbullet:
+      self.app.entities.remove(entity)
+      return
+     if self.width<self.height:
+      if entity.x<self.x:
+       entity.x=self.x-(self.width+entity.width)
+      if entity.x>self.x:
+       entity.x=self.x+(self.width+entity.width)
+     else:
+      if entity.y<self.y:
+       entity.y=self.y-(self.height+entity.height)
+      if entity.y>self.y:
+       entity.y=self.y+(self.height+entity.height)
+ def draw(self):
+  self.surface.fill((127,127,127))
    
    
 class Bullet(Entity):
@@ -80,15 +125,17 @@ class Bullet(Entity):
   self.y=y
   self.dx=dx
   self.dy=dy
+  self.isbullet=True
  def update(self):
   self.x+=self.dx
   self.y+=self.dy
   for entity in self.app.entities:
    if entity==self:
     continue
-   if entity.x-entity.width/2<self.x<entity.x+entity.width/2:
-    if entity.y-entity.height/2<self.y<entity.y+entity.height/2:
-     self.app.entities.remove(entity)
+   if not entity.solid:
+    if entity.x-entity.width/2<self.x<entity.x+entity.width/2:
+     if entity.y-entity.height/2<self.y<entity.y+entity.height/2:
+      self.app.entities.remove(entity)
  def draw(self):
   self.surface.fill((127,127,127))
 
@@ -130,16 +177,18 @@ class Player(Entity):
   self.y+=self.dy
  def draw(self):
   self.surface.fill((255,255,255))
-   
+
+WIDTH=1024
+HEIGHT=768
 
 class Application:
  def __init__(self):
   self.entities=[]
-  self.display=pygame.display.set_mode((1024,768))
+  self.display=pygame.display.set_mode((WIDTH,HEIGHT))
   self.clock=pygame.time.Clock()
  def init(self):
   self.player=Player(self)
-  self.entities=[self.player,]
+  self.entities=[]
   for i in range(4):
    x=random.randint(0,self.display.get_width())
    y=random.randint(0,self.display.get_height())
@@ -148,6 +197,9 @@ class Application:
    x=random.randint(0,self.display.get_width())
    y=random.randint(0,self.display.get_height())
    self.entities.append(Box(self,x,y))
+  for box in ((0,0,WIDTH,16),(0,0,16,HEIGHT),(0,HEIGHT-16,WIDTH,16),(WIDTH-16,0,16,HEIGHT)):
+   self.entities.append(Wall(self,*box))
+  self.entities.append(self.player)
  def update(self):
   for event in pygame.event.get():
    if event.type==pygame.QUIT:
