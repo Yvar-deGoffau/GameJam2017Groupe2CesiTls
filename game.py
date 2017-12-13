@@ -125,20 +125,22 @@ class Target(Entity):
   self.solid=True
   self.destructionstart=0
   self.destructionmode=False
+  self.waittime=5000
+  self.killtime=10000
  def update(self):
   if not self.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
     if pygame.key.get_pressed()[pygame.K_SPACE]:
      if self.destructionstart==0:
       self.destructionstart=pygame.time.get_ticks()
-     if pygame.time.get_ticks()-self.destructionstart>3000:
+     if pygame.time.get_ticks()-self.destructionstart>self.waittime:
       self.destructionmode=True
     else:
      self.destructionstart=0
    else:
     self.destructionstart=0
   else:
-   if pygame.time.get_ticks()-self.destructionstart>10000:
+   if pygame.time.get_ticks()-self.destructionstart>self.killtime:
     self.app.gameover=True
    self.redraw=True
     
@@ -151,6 +153,7 @@ class Exit(Entity):
   self.width=self.height=32
   self.x=x
   self.y=y
+  self.solid=True
  def update(self):
   if self.app.target.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
@@ -243,6 +246,8 @@ class Application:
    self.entities.append(Wall(self,*box))
   self.entities.append(self.player)
  def update(self):
+  if self.player not in self.entities:
+   self.gameover=True
   if self.gameover:
    self.init()
   for event in pygame.event.get():
@@ -278,10 +283,10 @@ class Application:
  def render_statusbar(self):
   if not self.target.destructionmode:
    if self.target.destructionstart!=0:
-    value=(pygame.time.get_ticks()-self.target.destructionstart)/3000.0
+    value=float(pygame.time.get_ticks()-self.target.destructionstart)/self.target.waittime
     self.display.fill((0,127,0),(0,0,int(self.display.get_width()*value),16))
   else:
-   value=(pygame.time.get_ticks()-self.target.destructionstart-3000)/7000.0
+   value=float(pygame.time.get_ticks()-self.target.destructionstart-self.target.waittime)/self.target.killtime
    self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
  def render(self):
   self.display.fill((0,0,0))
