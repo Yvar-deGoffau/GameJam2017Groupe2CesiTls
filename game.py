@@ -91,8 +91,20 @@ class Bullet(Entity):
      self.app.entities.remove(entity)
  def draw(self):
   self.surface.fill((127,127,127))
-   
 
+class Box(Entity):
+ def init(self,x,y):
+  self.x=x
+  self.y=y
+  self.width=self.height=12
+ def update(self):
+  if self.x-self.width/2-self.app.player.width<self.app.player.x<self.x+self.width/2+self.app.player.width:
+   if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
+    self.app.score+=1
+    self.app.entities.remove(self) 
+ def draw(self):
+  self.surface.fill((127,0,255))
+  
 class Player(Entity):
  def init(self):
   self.x=320
@@ -124,6 +136,7 @@ class Application:
   self.entities=[]
   self.display=pygame.display.set_mode((1024,768))
   self.clock=pygame.time.Clock()
+  self.score=0
  def init(self):
   self.player=Player(self)
   self.entities=[self.player,]
@@ -131,6 +144,10 @@ class Application:
    x=random.randint(0,self.display.get_width())
    y=random.randint(0,self.display.get_height())
    self.entities.append(Nazi(self,x,y))
+  for i in range(4):
+   x=random.randint(0,self.display.get_width())
+   y=random.randint(0,self.display.get_height())
+   self.entities.append(Box(self,x,y))
  def update(self):
   for event in pygame.event.get():
    if event.type==pygame.QUIT:
@@ -167,6 +184,7 @@ class Application:
    self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
   pygame.display.flip()
   self.clock.tick(60)
+  pygame.display.set_caption("score:"+str(self.score))
  def run(self):
   self.init()
   while 1:
@@ -175,5 +193,8 @@ class Application:
    
    
 if __name__=="__main__":
- Application().run()
+ try:
+  Application().run()
+ finally:
+  pygame.quit()
  
