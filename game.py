@@ -29,7 +29,9 @@ class Nazi(Entity):  # the guardians that goes after you
   self.dir=random.random()*math.pi*2  # the direction
   self.width=self.height=16 #  width and height
   self.awake=False    #  if we are chasing a player
-  self.vision=128
+  self.vision=160
+  self.speedawake=2.0
+  self.speedasleep=1.5
   #  the field of vision
   self.lastawake=0    #  the last time that we were awaken
  def update(self):
@@ -67,16 +69,16 @@ class Nazi(Entity):  # the guardians that goes after you
    x=self.x-self.app.player.x
    y=self.y-self.app.player.y
    self.dir=math.atan2(y,x)
-   if not random.randint(0,128):
+   if not random.randint(0,64):
     self.shoot()
-  self.dx=math.cos(self.dir)*2
-  self.dy=math.sin(self.dir)*2
+  self.dx=math.cos(self.dir)
+  self.dy=math.sin(self.dir)
   if self.awake:
-   self.dx*=1
-   self.dy*=1
+   self.dx*=self.speedawake
+   self.dy*=self.speedawake
   else:
-   self.dx*=0.5
-   self.dy*=0.5
+   self.dx*=self.speedasleep
+   self.dy*=self.speedasleep
   self.x-=self.dx
   self.y-=self.dy
  def shoot(self):
@@ -292,13 +294,13 @@ class Application:
   self.display.fill((0,0,0))
   for entity in self.entities:
    if entity.vision:
-    surface=pygame.Surface((256,256),pygame.SRCALPHA)
+    surface=pygame.Surface((entity.vision*2,entity.vision*2),pygame.SRCALPHA)
     surface.fill((0,0,0,0))
     if entity.awake:
-     pygame.draw.circle(surface,(255,255,0,127),(128,128),128,0)
+     pygame.draw.circle(surface,(255,255,0,127),(entity.vision,entity.vision),entity.vision,0)
     else:
-     pygame.draw.circle(surface,(127,127,0,127),(128,128),128,0)
-    self.display.blit(surface,(int(entity.x-128),int(entity.y-128)))
+     pygame.draw.circle(surface,(127,127,0,127),(entity.vision,entity.vision),entity.vision,0)
+    self.display.blit(surface,(int(entity.x-entity.vision),int(entity.y-entity.vision)))
   for entity in self.entities:
    surface=entity.render()
    self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
