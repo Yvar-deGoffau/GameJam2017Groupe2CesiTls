@@ -134,6 +134,8 @@ class Target(Entity):
      if pygame.time.get_ticks()-self.destructionstart>3000:
       self.destructionmode=True
      self.redraw=True
+    else:
+     self.destructionstart=0
    else:
     self.destructionstart=0
   else:
