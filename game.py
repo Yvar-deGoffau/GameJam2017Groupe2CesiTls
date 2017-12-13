@@ -27,14 +27,20 @@ class Nazi(Entity):
   self.width=self.height=16
   self.awake=False
   self.vision=128
+  self.lastawake=0
  def update(self):
-  if not self.awake:
-   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
-   if distance<self.vision**2:
-    self.awake=True
+  distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
+  if distance<self.vision**2:
+   if self.awake==False:
     self.redraw=True
-   else:
-    self.dir+=(random.random()*2-1)/4
+   self.awake=True
+   self.lastawake=pygame.time.get_ticks()
+  elif self.awake:
+   if pygame.time.get_ticks()-self.lastawake>3000:
+    self.awake=False
+    self.redraw=True
+  if not self.awake:
+   self.dir+=(random.random()*2-1)/4
   else:
    x=self.x-self.app.player.x
    y=self.y-self.app.player.y
@@ -103,7 +109,7 @@ class Player(Entity):
 class Application:
  def __init__(self):
   self.entities=[]
-  self.display=pygame.display.set_mode((640,480))
+  self.display=pygame.display.set_mode((1024,768))
   self.clock=pygame.time.Clock()
  def init(self):
   self.player=Player(self)
