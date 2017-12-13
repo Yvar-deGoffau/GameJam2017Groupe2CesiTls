@@ -83,6 +83,12 @@ class Bullet(Entity):
  def update(self):
   self.x+=self.dx
   self.y+=self.dy
+  for entity in self.app.entities:
+   if entity==self:
+    continue
+   if entity.x-entity.width/2<self.x<entity.x+entity.width/2:
+    if entity.y-entity.height/2<self.y<entity.y+entity.height/2:
+     self.app.entities.remove(entity)
  def draw(self):
   self.surface.fill((127,127,127))
    
