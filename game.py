@@ -4,6 +4,7 @@ class Entity:
  def __init__(self,app,*args):
   self.app=app
   self.needrender=True
+  self.vision=0
   self.init(*args)
  def init(self):
   pass
@@ -22,7 +23,15 @@ class Nazi(Entity):
   self.x=x
   self.y=y
   self.width=self.height=16
+  self.awake=False
+  self.vision=128
  def update(self):
+  if not self.awake:
+   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
+   if distance<self.vision**2:
+    self.awake=True
+   else:
+    return
   x=self.x-self.app.player.x
   y=self.y-self.app.player.y
   dir=math.atan2(y,x)
@@ -35,7 +44,7 @@ class Nazi(Entity):
  def shoot(self):
   self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
  def draw(self):
-  self.surface.fill((127,0,0))
+  self.surface.fill((255,0,0))
    
    
 class Bullet(Entity):
@@ -85,7 +94,7 @@ class Application:
   self.clock=pygame.time.Clock()
  def init(self):
   self.player=Player(self)
-  self.entities=[self.player,Nazi(self,0,0)]
+  self.entities=[self.player,Nazi(self,160,120)]
  def update(self):
   for event in pygame.event.get():
    if event.type==pygame.QUIT:
@@ -108,6 +117,9 @@ class Application:
    entity.update()
  def render(self):
   self.display.fill((0,0,0))
+  for entity in self.entities:
+   if entity.vision:
+    pygame.draw.circle(self.display,(127,127,0),(int(entity.x),int(entity.y)),128,0)
   for entity in self.entities:
    surface=entity.render()
    self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
