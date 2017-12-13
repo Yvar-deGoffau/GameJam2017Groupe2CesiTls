@@ -100,7 +100,7 @@ class Box(Entity):
  def update(self):
   if self.x-self.width/2-self.app.player.width<self.app.player.x<self.x+self.width/2+self.app.player.width:
    if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
-    self.app.score+=1
+    self.app.player.bullets+=random.randint(8,16)
     self.app.entities.remove(self) 
  def draw(self):
   self.surface.fill((127,0,255))
@@ -112,6 +112,7 @@ class Player(Entity):
   self.dx=0
   self.dy=0
   self.width=self.height=16
+  self.bullets=0
  def update(self):
   if pygame.key.get_pressed()[pygame.K_LEFT]:
    self.dx=-4
@@ -136,7 +137,6 @@ class Application:
   self.entities=[]
   self.display=pygame.display.set_mode((1024,768))
   self.clock=pygame.time.Clock()
-  self.score=0
  def init(self):
   self.player=Player(self)
   self.entities=[self.player,]
@@ -157,7 +157,7 @@ class Application:
     if event.key==pygame.K_ESCAPE:
      pygame.quit()
      sys.exit()
-   if event.type==pygame.MOUSEBUTTONDOWN:
+   if event.type==pygame.MOUSEBUTTONDOWN and self.player.bullets>0:
     px=(self.player.x)
     py=(self.player.y)
     x=event.pos[0]-px
@@ -166,6 +166,7 @@ class Application:
     dx=math.cos(dir)*16
     dy=math.sin(dir)*16
     self.entities.append(Bullet(self,px,py,dx,dy))
+    self.player.bullets-=1
   for entity in self.entities:
    entity.update()
  def render(self):
@@ -184,7 +185,7 @@ class Application:
    self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
   pygame.display.flip()
   self.clock.tick(60)
-  pygame.display.set_caption("score:"+str(self.score))
+  pygame.display.set_caption("bullets left:"+str(self.player.bullets))
  def run(self):
   self.init()
   while 1:
