@@ -116,8 +116,42 @@ class Wall(Entity):
        entity.y=self.y+(entity.height)+8
  def draw(self):
   self.surface.fill((127,127,127))
-   
-   
+
+class Target(Entity):
+ def init(self,x,y):
+  self.x=x
+  self.y=y
+  self.width=self.height=32
+  self.solid=True
+  self.destructionstart=0
+  self.destructionmode=False
+ def update(self):
+  if not self.destructionmode:
+   if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
+    if pygame.key.get_pressed()[pygame.K_SPACE]:
+     if self.destructionstart==0:
+      self.destructionstart=pygame.time.get_ticks()
+     if pygame.time.get_ticks()-self.destructionstart>3000:
+      self.destructionmode=True
+     self.redraw=True
+   else:
+    self.destructionstart=0
+  else:
+   if pygame.time.get_ticks()-self.destructionstart>10000:
+    self.app.gameover=True
+   self.redraw=True
+    
+ def draw(self):
+  self.surface.fill((0,127,0))
+  display=pygame.display.get_surface()
+  if not self.destructionmode:
+   if self.destructionstart!=0:
+    value=(pygame.time.get_ticks()-self.destructionstart)/3000.0
+    display.fill((0,127,0),(0,0,int(display.get_width()*value),display.get_height()))
+  else:
+    value=(pygame.time.get_ticks()-self.destructionstart-3000)/7000.0
+    display.fill((127,0,0),(0,0,int(display.get_width()*value),display.get_height()))
+    
 class Bullet(Entity):
  def init(self,x,y,dx,dy):
   self.width=self.height=8
@@ -187,8 +221,10 @@ class Application:
   self.display=pygame.display.set_mode((WIDTH,HEIGHT))
   self.clock=pygame.time.Clock()
  def init(self):
+  self.gameover=False
   self.player=Player(self)
-  self.entities=[]
+  self.target=Target(self,640,240)
+  self.entities=[self.target,]
   for i in range(4):
    x=random.randint(0,self.display.get_width())
    y=random.randint(0,self.display.get_height())
@@ -201,6 +237,8 @@ class Application:
    self.entities.append(Wall(self,*box))
   self.entities.append(self.player)
  def update(self):
+  if self.gameover:
+   self.init()
   for event in pygame.event.get():
    if event.type==pygame.QUIT:
     pygame.quit()
