@@ -209,6 +209,16 @@ class Application:
     if event.key==pygame.K_ESCAPE:
      pygame.quit()
      sys.exit()
+    if event.key==pygame.K_RETURN:
+     pygame.display.set_caption("PAUSE")
+     paused=True
+     while paused:
+      for event in pygame.event.get():
+       if event.type==pygame.KEYDOWN:
+        paused=False
+       if event.type==pygame.QUIT:
+        pygame.quit()
+        sys.exit()
    if event.type==pygame.MOUSEBUTTONDOWN and self.player.bullets>0:
     px=(self.player.x)
     py=(self.player.y)
