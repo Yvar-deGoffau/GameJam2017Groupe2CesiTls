@@ -133,7 +133,6 @@ class Target(Entity):
       self.destructionstart=pygame.time.get_ticks()
      if pygame.time.get_ticks()-self.destructionstart>3000:
       self.destructionmode=True
-     self.redraw=True
     else:
      self.destructionstart=0
    else:
@@ -145,14 +144,6 @@ class Target(Entity):
     
  def draw(self):
   self.surface.fill((0,127,0))
-  display=pygame.display.get_surface()
-  if not self.destructionmode:
-   if self.destructionstart!=0:
-    value=(pygame.time.get_ticks()-self.destructionstart)/3000.0
-    display.fill((0,127,0),(0,0,int(display.get_width()*value),display.get_height()))
-  else:
-    value=(pygame.time.get_ticks()-self.destructionstart-3000)/7000.0
-    display.fill((127,0,0),(0,0,int(display.get_width()*value),display.get_height()))
     
 class Bullet(Entity):
  def init(self,x,y,dx,dy):
@@ -271,6 +262,14 @@ class Application:
     self.player.bullets-=1
   for entity in self.entities:
    entity.update()
+ def render_statusbar(self):
+  if not self.target.destructionmode:
+   if self.target.destructionstart!=0:
+    value=(pygame.time.get_ticks()-self.target.destructionstart)/3000.0
+    self.display.fill((0,127,0),(0,0,int(self.display.get_width()*value),16))
+  else:
+    value=(pygame.time.get_ticks()-self.target.destructionstart-3000)/7000.0
+    self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
  def render(self):
   self.display.fill((0,0,0))
   for entity in self.entities:
@@ -285,6 +284,7 @@ class Application:
   for entity in self.entities:
    surface=entity.render()
    self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
+  self.render_statusbar()
   pygame.display.flip()
   self.clock.tick(60)
   pygame.display.set_caption("bullets left:"+str(self.player.bullets))
