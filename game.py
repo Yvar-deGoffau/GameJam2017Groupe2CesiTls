@@ -175,7 +175,6 @@ class Player(Entity):
    self.dy=0
   self.x+=self.dx
   self.y+=self.dy
-  print self.x,self.y
  def draw(self):
   self.surface.fill((255,255,255))
 
