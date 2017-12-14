@@ -232,6 +232,7 @@ class Application:
   self.display=pygame.display.set_mode((WIDTH,HEIGHT))
   self.clock=pygame.time.Clock()
  def init(self):
+  self.scrollx=self.scrolly=0
   self.gameover=False
   self.player=Player(self)
   self.target=Target(self,640,240)
@@ -273,8 +274,8 @@ class Application:
    if event.type==pygame.MOUSEBUTTONDOWN and self.player.bullets>0:
     px=(self.player.x)
     py=(self.player.y)
-    x=event.pos[0]-px
-    y=event.pos[1]-py
+    x=event.pos[0]-px-self.scrollx
+    y=event.pos[1]-py-self.scrolly
     dir=math.atan2(y,x)
     dx=math.cos(dir)*16
     dy=math.sin(dir)*16
@@ -282,6 +283,8 @@ class Application:
     self.player.bullets-=1
   for entity in self.entities:
    entity.update()
+  self.scrollx=-self.player.x+self.display.get_width()/2
+  self.scrolly=-self.player.y+self.display.get_height()/2
  def render_statusbar(self):
   if not self.target.destructionmode:
    if self.target.destructionstart!=0:
@@ -300,10 +303,10 @@ class Application:
      pygame.draw.circle(surface,(255,255,0,127),(entity.vision,entity.vision),entity.vision,0)
     else:
      pygame.draw.circle(surface,(127,127,0,127),(entity.vision,entity.vision),entity.vision,0)
-    self.display.blit(surface,(int(entity.x-entity.vision),int(entity.y-entity.vision)))
+    self.display.blit(surface,(self.scrollx+int(entity.x-entity.vision),self.scrolly+int(entity.y-entity.vision)))
   for entity in self.entities:
    surface=entity.render()
-   self.display.blit(surface,(entity.x-entity.width/2,entity.y-entity.height/2))
+   self.display.blit(surface,(self.scrollx+(entity.x-entity.width/2),self.scrolly+(entity.y-entity.height/2)))
   self.render_statusbar()
   pygame.display.flip()
   self.clock.tick(60)
