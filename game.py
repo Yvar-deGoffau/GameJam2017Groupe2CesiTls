@@ -70,9 +70,9 @@ class Level:
    HGuard(app,126*Z,23*Z,136*Z),
    VGuard(app,141*Z,23*Z, 35*Z),
    VGuard(app,130*Z,35*Z, 49*Z),
-   HGuard(app,116*Z,46*Z,125*Z),
-   HGuard(app,135*Z,41*Z,143*Z),
-   HGuard(app,135*Z,47*Z,143*Z),
+   HGuard(app,116*Z,46*Z,124*Z),
+   HGuard(app,135*Z,41*Z,142*Z),
+   HGuard(app,135*Z,47*Z,142*Z),
    HGuard(app,127*Z,10*Z,142*Z),
    VGuard(app,136*Z,12*Z, 18*Z),
    VGuard(app,142*Z,12*Z, 18*Z),
@@ -120,19 +120,59 @@ class Entity:
 
 class HGuard(Entity):
  def init(self,x1,y,x2):
-  self.x1=x1
-  self.x2=x2
+  self.x1=min(x1,x2)
+  self.x2=max(x1,x2)
   self.x=(x1+x2)/2
   self.y=y
   self.width=self.height=16
+  self.vision=128
+  self.awake=False
+  self.dx=random.randint(0,1)*2-1
+  self.dy=0
+ def update(self):
+  self.walk()
+  self.x+=self.dx
+  self.y+=self.dy
+ def walk(self):
+  if self.x<self.x1:
+   self.dx=1
+  elif self.x>self.x2:
+   self.dx=-1
+ def shoot(self):
+  self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
+ def draw(self):
+  if self.awake:
+   self.surface.fill((255,0,0))
+  else:
+   self.surface.fill((127,0,0))
 
 class VGuard(Entity):
  def init(self,x,y1,y2):
-  self.y1=y1
-  self.y2=y2
+  self.y1=min(y1,y2)
+  self.y2=max(y1,y2)
   self.y=(y1+y2)/2
   self.x=x
   self.width=self.height=16
+  self.vision=128
+  self.awake=False
+  self.dx=0
+  self.dy=random.randint(0,1)*2-1
+ def update(self):
+  self.walk()
+  self.x+=self.dx
+  self.y+=self.dy
+ def walk(self):
+  if self.y<self.y1:
+   self.dy=1
+  elif self.y>self.y2:
+   self.dy=-1
+ def shoot(self):
+  self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
+ def draw(self):
+  if self.awake:
+   self.surface.fill((255,0,0))
+  else:
+   self.surface.fill((127,0,0))
 
 
 class Nazi(Entity):  # the guardians that goes after you
@@ -291,7 +331,7 @@ class Target(Entity):
   self.destructionstart=0
   self.destructionmode=False
   self.waittime=5000
-  self.killtime=10000
+  self.killtime=25000
  def update(self):
   if not self.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
@@ -305,7 +345,7 @@ class Target(Entity):
    else:
     self.destructionstart=0
   else:
-   if pygame.time.get_ticks()-self.destructionstart>self.killtime:
+   if pygame.time.get_ticks()-self.destructionstart>self.killtime+self.waittime:
     self.app.gameover=True
    self.redraw=True
     
