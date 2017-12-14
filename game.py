@@ -29,7 +29,7 @@ class Nazi(Entity):  # the guardians that goes after you
   self.dir=random.random()*math.pi*2  # the direction
   self.width=self.height=16 #  width and height
   self.awake=False    #  if we are chasing a player
-  self.vision=160
+  self.vision=144
   self.speedawake=2.0
   self.speedasleep=1.5
   #  the field of vision
@@ -238,12 +238,12 @@ class Application:
   self.target=Target(self,640,240)
   self.entities=[Exit(self,320,240),self.target]
   for i in range(4):
-   x=random.randint(0,self.display.get_width())
-   y=random.randint(0,self.display.get_height())
+   x=random.randint(8,self.display.get_width()-8)
+   y=random.randint(8,self.display.get_height()-8)
    self.entities.append(Nazi(self,x,y))
   for i in range(4):
-   x=random.randint(0,self.display.get_width())
-   y=random.randint(0,self.display.get_height())
+   x=random.randint(8,self.display.get_width()-8)
+   y=random.randint(8,self.display.get_height()-8)
    self.entities.append(Box(self,x,y))
   for box in ((0,0,WIDTH,16),(0,0,16,HEIGHT),(0,HEIGHT-16,WIDTH,16),(WIDTH-16,0,16,HEIGHT),(WIDTH/2-8,0,16,HEIGHT/2)):
    self.entities.append(Wall(self,*box))
