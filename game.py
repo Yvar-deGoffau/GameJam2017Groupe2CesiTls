@@ -3,9 +3,10 @@ import pygame,random,math,sys
 class Level:
  def level1(self,app):
   Z=24
-  app.player=Player(app,20*Z,18*Z)
+  app.player=Player(app,20*Z,8*Z)
   app.target=Target(app,120*Z,4*Z)
   return [
+    #les murs
    HWall(app,  0*Z, 5*Z, 23*Z),
    VWall(app,  0*Z, 5*Z, 50*Z),
    VWall(app, 23*Z, 5*Z, 30*Z),
@@ -44,7 +45,52 @@ class Level:
    VWall(app,132*Z,45*Z, 51*Z),
    HWall(app,115*Z,44*Z,126*Z),
    VWall(app,126*Z,47*Z, 51*Z),
-   Exit(app,20*Z,18*Z),
+
+    #les guardiens
+   VGuard(app,  3*Z, 8*Z, 24*Z),
+   VGuard(app,  9*Z,17*Z, 32*Z),
+   VGuard(app, 21*Z,16*Z, 27*Z),
+   VGuard(app,  9*Z,34*Z, 42*Z),
+   VGuard(app, 16*Z,32*Z, 41*Z),
+   HGuard(app, 10*Z,47*Z, 19*Z),
+   HGuard(app, 48*Z,11*Z, 57*Z),
+   VGuard(app, 67*Z,11*Z, 20*Z),
+   VGuard(app, 56*Z,15*Z, 27*Z),
+   VGuard(app, 50*Z,25*Z, 33*Z),
+   VGuard(app, 62*Z,25*Z, 33*Z),
+   VGuard(app, 70*Z,27*Z, 32*Z),
+   HGuard(app, 80*Z,11*Z, 89*Z),
+   HGuard(app, 75*Z,19*Z, 88*Z),
+   VGuard(app, 88*Z,20*Z, 27*Z),
+   HGuard(app, 75*Z,28*Z, 83*Z),
+   HGuard(app, 75*Z,33*Z, 86*Z),
+   HGuard(app, 89*Z,33*Z,101*Z),
+   HGuard(app,106*Z,33*Z,121*Z),
+   HGuard(app,118*Z,27*Z,130*Z),
+   HGuard(app,126*Z,23*Z,136*Z),
+   VGuard(app,141*Z,23*Z, 35*Z),
+   VGuard(app,130*Z,35*Z, 49*Z),
+   HGuard(app,116*Z,46*Z,125*Z),
+   HGuard(app,135*Z,41*Z,143*Z),
+   HGuard(app,135*Z,47*Z,143*Z),
+   HGuard(app,127*Z,10*Z,142*Z),
+   VGuard(app,136*Z,12*Z, 18*Z),
+   VGuard(app,142*Z,12*Z, 18*Z),
+   VGuard(app,142*Z, 2*Z,  7*Z),
+   HGuard(app,125*Z, 2*Z,137*Z),
+
+    #les boites
+   Box(app, 21*Z,29*Z),
+   Box(app, 25*Z,32*Z),
+   Box(app, 27*Z,32*Z),
+   Box(app, 76*Z,11*Z),
+   Box(app, 76*Z,13*Z),
+   Box(app,117*Z,49*Z),
+   Box(app,142*Z,49*Z),
+   Box(app,142*Z,40*Z),
+
+    #les autres choses
+   Exit(app,20*Z,8*Z),
    app.target,
    app.player,
    ]
@@ -62,12 +108,31 @@ class Entity:
   pass
  def update(self): # do the object housekeeping code
   pass
+ def draw(self):
+  pass
  def render(self): # executed once per frame to render the sprite
   if self.redraw:  #  if we need to redraw the sprite
    self.surface=pygame.Surface((self.width,self.height)) #   then create a new surface for it
    self.draw()     #  execute the instance-specific drawing code
    self.redraw=False  #   and the redraw is now done
   return self.surface #  return our (newly-drawn or not) sprite
+
+
+class HGuard(Entity):
+ def init(self,x1,y,x2):
+  self.x1=x1
+  self.x2=x2
+  self.x=(x1+x2)/2
+  self.y=y
+  self.width=self.height=16
+
+class VGuard(Entity):
+ def init(self,x,y1,y2):
+  self.y1=y1
+  self.y2=y2
+  self.y=(y1+y2)/2
+  self.x=x
+  self.width=self.height=16
 
 
 class Nazi(Entity):  # the guardians that goes after you
