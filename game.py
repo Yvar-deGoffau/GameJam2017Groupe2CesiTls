@@ -1,5 +1,54 @@
 import pygame,random,math,sys
 
+class Level:
+ def level1(self,app):
+  Z=24
+  app.player=Player(app,20*Z,18*Z)
+  app.target=Target(app,120*Z,4*Z)
+  return [
+   HWall(app,  0*Z, 5*Z, 23*Z),
+   VWall(app,  0*Z, 5*Z, 50*Z),
+   VWall(app, 23*Z, 5*Z, 30*Z),
+   HWall(app, 11*Z,14*Z, 23*Z),
+   HWall(app, 14*Z,30*Z, 35*Z),
+   VWall(app, 14*Z,30*Z, 38*Z),
+   VWall(app, 21*Z,30*Z, 38*Z),
+   VWall(app, 29*Z,30*Z, 45*Z),
+   VWall(app, 14*Z,41*Z, 45*Z),
+   HWall(app, 14*Z,45*Z, 29*Z),
+   HWall(app,  0*Z,50*Z, 47*Z),
+   VWall(app, 47*Z,18*Z, 50*Z),
+   VWall(app, 35*Z, 9*Z, 30*Z),
+   HWall(app, 35*Z, 9*Z, 91*Z),
+   HWall(app, 47*Z,36*Z,115*Z),
+   VWall(app, 74*Z, 9*Z, 21*Z),
+   HWall(app, 74*Z,18*Z, 85*Z),
+   VWall(app, 74*Z,25*Z, 29*Z),
+   HWall(app, 74*Z,29*Z, 91*Z),
+   VWall(app, 91*Z, 9*Z, 32*Z),
+   HWall(app, 91*Z,32*Z,115*Z),
+   VWall(app,115*Z, 0*Z, 32*Z),
+   HWall(app,115*Z, 0*Z,144*Z),
+   VWall(app,115*Z,36*Z, 51*Z),
+   HWall(app,115*Z,51*Z,144*Z),
+   VWall(app,144*Z, 0*Z, 51*Z),
+   HWall(app,115*Z,11*Z,125*Z),
+   VWall(app,125*Z, 6*Z, 11*Z),
+   HWall(app,125*Z, 8*Z,134*Z),
+   VWall(app,140*Z, 0*Z,  5*Z),
+   HWall(app,125*Z,20*Z,144*Z),
+   VWall(app,133*Z,13*Z, 20*Z),
+   VWall(app,138*Z,13*Z, 20*Z),
+   HWall(app,132*Z,38*Z,144*Z),
+   VWall(app,132*Z,38*Z, 42*Z),
+   VWall(app,132*Z,45*Z, 51*Z),
+   HWall(app,115*Z,44*Z,126*Z),
+   VWall(app,126*Z,47*Z, 51*Z),
+   Exit(app,20*Z,18*Z),
+   app.target,
+   app.player,
+   ]
+
 class Entity:
  def __init__(self,app,*args):
   self.solid=False
@@ -119,6 +168,55 @@ class Wall(Entity):
  def draw(self):
   self.surface.fill((127,127,127))
 
+
+class HWall(Entity):
+ def init(self,x1,y,x2):
+  self.thickness=16
+  self.width=abs(x2-x1)+self.thickness
+  self.x=min(x1,x2)+self.width/2-self.thickness
+  self.y=y-self.thickness/2
+  self.height=self.thickness
+  self.solid=True
+ def update(self):
+  for entity in self.app.entities:
+   if entity.solid:
+    continue
+   if self.x-(entity.width+self.width/2)<entity.x<self.x+self.width/2+entity.width:
+    if self.y-(entity.height+self.height/2)<entity.y<self.y+self.height/2+entity.height:
+     if entity.isbullet:
+      self.app.entities.remove(entity)
+      return
+     if entity.y<self.y:
+      entity.y=self.y-(entity.height)-8
+     else:
+      entity.y=self.y+(entity.height)+8
+ def draw(self):
+  self.surface.fill((127,127,127))
+  
+class VWall(Entity):
+ def init(self,x,y1,y2):
+  self.thickness=16
+  self.height=abs(y2-y1)+self.thickness
+  self.x=x-self.thickness/2
+  self.y=min(y1,y2)+self.height/2-self.thickness
+  self.width=self.thickness
+  self.solid=True
+ def update(self):
+  for entity in self.app.entities:
+   if entity.solid:
+    continue
+   if self.x-(entity.width+self.width/2)<entity.x<self.x+self.width/2+entity.width:
+    if self.y-(entity.height+self.height/2)<entity.y<self.y+self.height/2+entity.height:
+     if entity.isbullet:
+      self.app.entities.remove(entity)
+      return
+     if entity.x<self.x:
+      entity.x=self.x-(entity.width)-8
+     else:
+      entity.x=self.x+(entity.width)+8
+ def draw(self):
+  self.surface.fill((127,127,127))
+
 class Target(Entity):
  def init(self,x,y):
   self.x=x
@@ -198,9 +296,9 @@ class Box(Entity):
   self.surface.fill((127,0,255))
   
 class Player(Entity):
- def init(self):
-  self.x=320
-  self.y=240
+ def init(self,x,y):
+  self.x=x
+  self.y=y
   self.dx=0
   self.dy=0
   self.width=self.height=16
@@ -234,20 +332,7 @@ class Application:
  def init(self):
   self.scrollx=self.scrolly=0
   self.gameover=False
-  self.player=Player(self)
-  self.target=Target(self,640,240)
-  self.entities=[Exit(self,320,240),self.target]
-  for i in range(4):
-   x=random.randint(8,self.display.get_width()-8)
-   y=random.randint(8,self.display.get_height()-8)
-   self.entities.append(Nazi(self,x,y))
-  for i in range(4):
-   x=random.randint(8,self.display.get_width()-8)
-   y=random.randint(8,self.display.get_height()-8)
-   self.entities.append(Box(self,x,y))
-  for box in ((0,0,WIDTH,16),(0,0,16,HEIGHT),(0,HEIGHT-16,WIDTH,16),(WIDTH-16,0,16,HEIGHT),(WIDTH/2-8,0,16,HEIGHT/2)):
-   self.entities.append(Wall(self,*box))
-  self.entities.append(self.player)
+  self.entities=Level().level1(self)
  def update(self):
   if self.player not in self.entities:
    self.gameover=True
