@@ -589,22 +589,42 @@ HEIGHT=768
 class Application:
  def __init__(self):
   self.entities=[]
-  self.display=pygame.display.set_mode((WIDTH,HEIGHT))
+  pygame.init()
+  self.displayinfo=pygame.display.Info()
+  self.videowidth=self.displayinfo.current_w
+  self.videoheight=self.displayinfo.current_h
+  self.display=pygame.display.set_mode((WIDTH,HEIGHT),pygame.RESIZABLE)
   self.clock=pygame.time.Clock()
+  self.fullscreen=False
+  self.font=pygame.font.Font(pygame.font.get_default_font(),40)
  def init(self):
   self.scrollx=self.scrolly=0
   self.gameover=False
   self.entities=Level().level1(self)
+ def set_fullscreen(self):
+  self.olddisplaysize=self.display.get_size()
+  self.display=pygame.display.set_mode((self.videowidth,self.videoheight),pygame.FULLSCREEN)
+  self.fullscreen=True
+ def unset_fullscreen(self): 
+  self.display=pygame.display.set_mode( self.olddisplaysize,pygame.RESIZABLE)
+  self.fullscreen=False
  def update(self):
   if self.player not in self.entities:
    self.gameover=True
   if self.gameover:
    self.init()
   for event in pygame.event.get():
+   if event.type==pygame.VIDEORESIZE:
+    pygame.display.set_mode(event.size,pygame.RESIZABLE)
    if event.type==pygame.QUIT:
     pygame.quit()
     sys.exit()
    if event.type==pygame.KEYDOWN:
+    if event.key==pygame.K_f:
+     if self.fullscreen:
+      self.unset_fullscreen()
+     else:
+      self.set_fullscreen()
     if event.key==pygame.K_ESCAPE:
      pygame.quit()
      sys.exit()
@@ -640,6 +660,8 @@ class Application:
   else:
    value=float(pygame.time.get_ticks()-self.target.destructionstart-self.target.waittime)/self.target.killtime
    self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
+  txt=self.font.render(str(self.player.bullets),True,(255,255,255))
+  self.display.blit(txt,(16,self.display.get_height()-txt.get_height()-16))
  def render(self):
   self.display.fill((0,0,0))
   for entity in self.entities:
