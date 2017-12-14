@@ -124,27 +124,106 @@ class HGuard(Entity):
   self.x2=max(x1,x2)
   self.x=(x1+x2)/2
   self.y=y
+  self.starty=y
   self.width=self.height=16
   self.vision=128
   self.awake=False
-  self.dx=random.randint(0,1)*2-1
+  self.speedasleep=1.5
+  self.dx=(random.randint(0,1)*2-1)*self.speedasleep
   self.dy=0
+  self.speedawake=2.0
+  self.lastawake=0   
+  self.direction=0
+  self.afterbullet=0
+  self.reload=pygame.time.get_ticks()
+  self.traceback=[]
  def update(self):
-  self.walk()
+  self.checkplayer()
+  if not self.awake and self.traceback==[]:
+   if not self.checkbullet():
+    self.walk()
+  elif not self.awake and self.traceback!=[]:
+   self.x,self.y=self.traceback.pop(-1)
+   self.dx=(random.randint(0,1)*2-1)*self.speedasleep
+   self.dy=0
+  else:
+   self.goafterplayer()
   self.x+=self.dx
   self.y+=self.dy
+ def checkplayer(self):
+   # look how far away the player is
+  distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
+   # if we see the player
+  if distance<self.vision**2:
+    # if we were patrolling
+   if self.awake==False:
+      #  fire a redraw
+    self.redraw=True
+    # keep awake
+   self.awake=True
+   self.lastawake=pygame.time.get_ticks()
+    # test if there are any other guards near to awaken
+   for entity in self.app.entities:
+    if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
+     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
+     if distance<(self.vision+entity.vision)**2: # if he is close enough
+      entity.awake=True  #  awaken him
+      entity.lastawake=self.lastawake
+      entity.redraw=True
+ def goafterplayer(self):
+  self.traceback.append((self.x,self.y))
+  x=self.x-self.app.player.x
+  y=self.y-self.app.player.y
+  self.dir=math.atan2(y,x)
+  if pygame.time.get_ticks()-self.reload>random.randint(500,1000):
+   self.shoot()
+  self.dx=-math.cos(self.dir)*self.speedawake
+  self.dy=-math.sin(self.dir)*self.speedawake
+  if pygame.time.get_ticks()-self.lastawake>3000:
+    self.awake=False
+    self.redraw=True
+ def goafterbullet(self):
+  self.dx=math.cos(self.direction)*self.speedawake
+  self.dy=math.sin(self.direction)*self.speedawake
+ def returnafterbullet(self):
+  self.dx=-math.cos(self.direction)*self.speedasleep
+  self.dy=-math.sin(self.direction)*self.speedasleep
+ def checkbullet(self):
+  if self.afterbullet:
+   if pygame.time.get_ticks()-self.afterbullet>2000:
+    self.returnafterbullet()
+    if self.starty-self.width<self.y<self.starty+self.width:
+     self.afterbullet=0
+     self.y=self.starty
+     self.dy=0
+     self.dx=self.speedasleep
+     return False
+   else:
+    self.goafterbullet()
+   return True
+  for entity in self.app.entities:
+   if entity.isbullet: # if a bullet is flying by
+    distance=(self.x-entity.x)**2+(self.y-entity.y)**2
+    if distance<self.vision**2: # if it is close enough
+     self.direction=math.atan2(entity.dy,entity.dx)+math.pi
+     self.afterbullet=pygame.time.get_ticks()
+     self.goafterbullet()
+     return True
+  return False
  def walk(self):
   if self.x<self.x1:
-   self.dx=1
+   self.dx=self.speedasleep
   elif self.x>self.x2:
-   self.dx=-1
+   self.dx=-self.speedasleep
  def shoot(self):
-  self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
+  self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
+  self.reload=pygame.time.get_ticks()
  def draw(self):
   if self.awake:
    self.surface.fill((255,0,0))
   else:
    self.surface.fill((127,0,0))
+
 
 class VGuard(Entity):
  def init(self,x,y1,y2):
@@ -152,22 +231,100 @@ class VGuard(Entity):
   self.y2=max(y1,y2)
   self.y=(y1+y2)/2
   self.x=x
+  self.startx=x
   self.width=self.height=16
   self.vision=128
   self.awake=False
+  self.speedasleep=1.5
+  self.dy=(random.randint(0,1)*2-1)*self.speedasleep
   self.dx=0
-  self.dy=random.randint(0,1)*2-1
+  self.speedawake=2.0
+  self.lastawake=0   
+  self.direction=0
+  self.afterbullet=0
+  self.reload=pygame.time.get_ticks()
+  self.traceback=[]
  def update(self):
-  self.walk()
+  self.checkplayer()
+  if not self.awake and self.traceback==[]:
+   if not self.checkbullet():
+    self.walk()
+  elif not self.awake and self.traceback!=[]:
+   self.x,self.y=self.traceback.pop(-1)
+   self.dy=(random.randint(0,1)*2-1)*self.speedasleep
+   self.dx=0
+  else:
+   self.goafterplayer()
   self.x+=self.dx
   self.y+=self.dy
+ def checkplayer(self):
+   # look how far away the player is
+  distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
+   # if we see the player
+  if distance<self.vision**2:
+    # if we were patrolling
+   if self.awake==False:
+      #  fire a redraw
+    self.redraw=True
+    # keep awake
+   self.awake=True
+   self.lastawake=pygame.time.get_ticks()
+    # test if there are any other guards near to awaken
+   for entity in self.app.entities:
+    if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
+     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
+     if distance<(self.vision+entity.vision)**2: # if he is close enough
+      entity.awake=True  #  awaken him
+      entity.lastawake=self.lastawake
+      entity.redraw=True
+ def goafterplayer(self):
+  self.traceback.append((self.x,self.y))
+  x=self.x-self.app.player.x
+  y=self.y-self.app.player.y
+  self.dir=math.atan2(y,x)
+  if pygame.time.get_ticks()-self.reload>random.randint(500,1000):
+   self.shoot()
+  self.dx=-math.cos(self.dir)*self.speedawake
+  self.dy=-math.sin(self.dir)*self.speedawake
+  if pygame.time.get_ticks()-self.lastawake>3000:
+    self.awake=False
+    self.redraw=True
+ def goafterbullet(self):
+  self.dx=math.cos(self.direction)*self.speedawake
+  self.dy=math.sin(self.direction)*self.speedawake
+ def returnafterbullet(self):
+  self.dx=-math.cos(self.direction)*self.speedasleep
+  self.dy=-math.sin(self.direction)*self.speedasleep
+ def checkbullet(self):
+  if self.afterbullet:
+   if pygame.time.get_ticks()-self.afterbullet>2000:
+    self.returnafterbullet()
+    if self.startx-self.height<self.x<self.startx+self.height:
+     self.afterbullet=0
+     self.x=self.startx
+     self.dx=0
+     self.dy=self.speedasleep
+     return False
+   else:
+    self.goafterbullet()
+   return True
+  for entity in self.app.entities:
+   if entity.isbullet: # if a bullet is flying by
+    distance=(self.x-entity.x)**2+(self.y-entity.y)**2
+    if distance<self.vision**2: # if it is close enough
+     self.direction=math.atan2(entity.dy,entity.dx)+math.pi
+     self.afterbullet=pygame.time.get_ticks()
+     self.goafterbullet()
+     return True
+  return False
  def walk(self):
   if self.y<self.y1:
-   self.dy=1
+   self.dy=self.speedasleep
   elif self.y>self.y2:
-   self.dy=-1
+   self.dy=-self.speedasleep
  def shoot(self):
-  self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
+  self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
+  self.reload=pygame.time.get_ticks()
  def draw(self):
   if self.awake:
    self.surface.fill((255,0,0))
