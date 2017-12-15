@@ -701,7 +701,7 @@ class Application:
   self.init()
   time=1
   while 1:
-   for i in range(int(time)):
+   for i in range(int(time)+1):
     self.update()
    oldtime=pygame.time.get_ticks()
    self.render()
