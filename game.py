@@ -608,28 +608,40 @@ class Player(Entity):
   self.dx=0
   self.dy=0
   self.width=self.height=16
+  self.imgwidth=self.imgheight=32
   self.bullets=0
+  self.imgnow="player-w"
+  self.steptick=pygame.time.get_ticks()
+  self.steptime=0
  def update(self):
-  if pygame.key.get_pressed()[pygame.K_LEFT]:
-   self.dx=-4
-  elif pygame.key.get_pressed()[pygame.K_RIGHT]:
-   self.dx=4
-  else:
-   self.dx=0
   if pygame.key.get_pressed()[pygame.K_UP]:
    self.dy=-4
+   self.imgnow="player-n"
   elif pygame.key.get_pressed()[pygame.K_DOWN]:
    self.dy=4
+   self.imgnow="player-s"
   else:
    self.dy=0
+  if pygame.key.get_pressed()[pygame.K_LEFT]:
+   self.dx=-4
+   self.imgnow="player-w"
+  elif pygame.key.get_pressed()[pygame.K_RIGHT]:
+   self.dx=4
+   self.imgnow="player-e"
+  else:
+   self.dx=0
   self.x+=self.dx
   self.y+=self.dy
+  self.remake_draw()
+ def remake_draw(self):
+  if self.dx!=0 or self.dy!=0:
+   if pygame.time.get_ticks()-self.steptick>(1.0/(self.dx**2+self.dy**2))*400:
+    self.steptime+=1
+    self.steptick=pygame.time.get_ticks()
+    self.redraw=True
  def draw(self):
-  pygame.draw.circle(self.surface,(255,255,255),(8,8),8)
-  surface=pygame.Surface((16,16),pygame.SRCALPHA)
-  pygame.draw.circle(surface,(0,0,0,127),(8,8),8)
-  self.surface.blit(surface,(4,4))
-  #self.surface.fill((255,255,255))
+  img=self.app.gfx[self.imgnow+str((self.steptime%4)+1)]
+  pygame.transform.scale(img,self.surface.get_size(),self.surface)
 
 WIDTH=1024
 HEIGHT=768
