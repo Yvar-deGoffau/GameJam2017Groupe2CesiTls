@@ -570,6 +570,7 @@ class Exit(Entity):
   if self.app.target.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
     self.app.gameover=True
+    self.app.difficulty=True
  def draw(self):
   pygame.transform.scale(self.app.gfx["exit"],self.surface.get_size(),self.surface)
     
@@ -581,6 +582,7 @@ class Bullet(Entity):
   self.dx=dx
   self.dy=dy
   self.isbullet=True
+  self.app.snd_shoot.play()
  def update(self):
   self.x+=self.dx
   self.y+=self.dy
@@ -664,6 +666,7 @@ class Application:
   self.unset_fullscreen()
   self.clock=pygame.time.Clock()
   self.font=pygame.font.Font(pygame.font.get_default_font(),40)
+  self.snd_shoot=pygame.mixer.Sound(os.path.join("Sounds","Shoot.wav"))
  def init(self):
   self.scrollx=self.scrolly=0
   self.gameover=False
