@@ -1,4 +1,4 @@
-import pygame,random,math,sys
+import pygame,random,math,os,sys
 
 class Level:
  def level1(self,app):
@@ -463,8 +463,8 @@ class HWall(Entity):
      else:
       entity.y=self.y+(entity.height)+8
  def draw(self):
-  self.surface.fill((127,127,127))
-  self.surface.fill((191,191,191),(0,0,self.surface.get_width(),6))
+  for i in range(self.surface.get_width()/16):
+   self.surface.blit(self.app.gfx["wall-h"],(i*16,0))
   
 class VWall(Entity):
  def init(self,x,y1,y2):
@@ -488,8 +488,8 @@ class VWall(Entity):
      else:
       entity.x=self.x+(entity.width)+8
  def draw(self):
-  self.surface.fill((127,127,127))
-  self.surface.fill((191,191,191),(0,0,6,self.surface.get_height()))
+  for i in range(self.surface.get_height()/16):
+   self.surface.blit(self.app.gfx["wall-v"],(0,i*16))
 
 class Target(Entity):
  def init(self,x,y):
@@ -533,7 +533,7 @@ class Exit(Entity):
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
     self.app.gameover=True
  def draw(self):
-  self.surface.fill((0,127,127))
+  pygame.transform.scale(self.app.gfx["exit"],self.surface.get_size(),self.surface)
     
 class Bullet(Entity):
  def init(self,x,y,dx,dy):
@@ -560,15 +560,14 @@ class Box(Entity):
  def init(self,x,y):
   self.x=x
   self.y=y
-  self.width=self.height=12
+  self.width=self.height=16
  def update(self):
   if self.x-self.width/2-self.app.player.width<self.app.player.x<self.x+self.width/2+self.app.player.width:
    if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
     self.app.player.bullets+=random.randint(4,8)
     self.app.entities.remove(self) 
  def draw(self):
-  self.surface.fill((127,0,255))
-  self.surface.fill((63,0,127),(4,4,16,16))
+  self.surface.blit(self.app.gfx["box"],(0,0))
   
 class Player(Entity):
  def init(self,x,y):
@@ -610,9 +609,9 @@ class Application:
   self.displayinfo=pygame.display.Info()
   self.videowidth=self.displayinfo.current_w
   self.videoheight=self.displayinfo.current_h
-  self.display=pygame.display.set_mode((WIDTH,HEIGHT),pygame.RESIZABLE)
+  self.olddisplaysize=(WIDTH,HEIGHT)
+  self.unset_fullscreen()
   self.clock=pygame.time.Clock()
-  self.fullscreen=False
   self.font=pygame.font.Font(pygame.font.get_default_font(),40)
  def init(self):
   self.scrollx=self.scrolly=0
@@ -622,9 +621,24 @@ class Application:
   self.olddisplaysize=self.display.get_size()
   self.display=pygame.display.set_mode((self.videowidth,self.videoheight),pygame.FULLSCREEN)
   self.fullscreen=True
+  self.prepare_gfx()
  def unset_fullscreen(self): 
   self.display=pygame.display.set_mode( self.olddisplaysize,pygame.RESIZABLE)
   self.fullscreen=False
+  self.prepare_gfx()
+ def prepare_gfx(self):
+  self.gfx={}
+  for f in os.listdir("Grafix"):
+   try:
+    img=pygame.image.load(os.path.join("Grafix",f)).convert()
+    self.gfx[f.split(".")[0]]=img
+   except pygame.error:
+    pass
+  floor=self.gfx["floor"]
+  self.background=pygame.Surface((self.display.get_width()+floor.get_width(),self.display.get_height()+floor.get_height()))
+  for y in range(self.background.get_height()/floor.get_height()):
+   for x in range(self.background.get_width()/floor.get_width()):
+    self.background.blit(floor,(x*floor.get_width(),y*floor.get_height()))
  def update(self):
   if self.player not in self.entities:
    self.gameover=True
@@ -680,7 +694,7 @@ class Application:
   txt=self.font.render(str(self.player.bullets),True,(255,255,255))
   self.display.blit(txt,(16,self.display.get_height()-txt.get_height()-16))
  def render(self):
-  self.display.fill((0,0,0))
+  self.display.blit(self.background,(self.scrollx%self.gfx["floor"].get_width(),self.scrolly%self.gfx["floor"].get_height()))
   for entity in self.entities:
    if entity.vision:
     surface=pygame.Surface((entity.vision*2,entity.vision*2),pygame.SRCALPHA)
