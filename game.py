@@ -795,8 +795,9 @@ class Application:
    self.display.blit(self.background,(0,0))
    self.font.draw_text(texte,self.display,-64,scrolly)
    pygame.display.flip()
-   if scrolly>24:
-    scrolly-=1
+   if scrolly<-texte.count("\n")*24-48:
+    showingsplash=False
+   scrolly-=1
    for event in pygame.event.get():
     if event.type==pygame.QUIT:
      pygame.quit()
@@ -805,7 +806,10 @@ class Application:
      showingsplash=False
     if event.type==pygame.MOUSEBUTTONDOWN:
      showingsplash=False
-   self.clock.tick(60)
+   if scrolly>24:
+    self.clock.tick(60)
+   else:
+    self.clock.tick(50)
   self.font=Font((255,0,255),(255,255,255),32,32)
    
   
