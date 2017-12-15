@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 import pygame,random,math,os,sys
 
 class Level:
@@ -728,8 +729,8 @@ class Application:
   self.olddisplaysize=(WIDTH,HEIGHT)
   self.unset_fullscreen()
   self.clock=pygame.time.Clock()
-  self.font=Font((255,0,255),(255,255,255),32,32)
   self.snd_shoot=pygame.mixer.Sound(os.path.join("Sounds","Shoot.wav"))
+  self.show_splash()
  def init(self):
   self.scrollx=self.scrolly=0
   self.gameover=False
@@ -756,6 +757,58 @@ class Application:
   for y in range(self.background.get_height()/floor.get_height()):
    for x in range(self.background.get_width()/floor.get_width()):
     self.background.blit(floor,(x*floor.get_width(),y*floor.get_height()))
+ def show_splash(self):
+  self.font=Font((255,0,255),(255,255,255),24,24)
+  texte="""
+   AGENT HILLER, BIENVENUE EN FRANCE.
+   
+   COMME VOUS LE SAVEZ DEJA LE PAYS EST SOUS
+    L'OCCUPATION ALLEMANDE DEPUIS 1940.
+    
+   MAINTENANT LES FRANCAIS FABRIQUENT DES
+    HELICES D'AVION POUR LA LUFTWAFFE.
+    
+   VOTRE PREMIERE MISSION CONSISTERA A VOUS
+    INFILTREZ DANS L'USINE RATIER A FIGEAC
+    ET DETRUIRE LE PROCHAIN CHARGEMENT.
+    
+   NOUS VOUS AVONS TROUVE UNE ARME, UN
+    LUGER P08, SEULEMENT NOUS N'AVONS PAS
+    LES MUNITIONS QUI VONT AVEC.
+    
+   VOUS DEVREZ EN TROUVER SUR PLACE.
+   
+   NOUS AVONS PASSE UN BON MOMENT A CREUSER
+    UNE GALLERIE AVEC L'AIDE DE
+    CERTAINS RESISTANTS,
+    
+   VOUS ENTREREZ ET SORTIREZ PAR LA LE PLUS
+    VITE POSSIBLE AVANT DE FAIRE
+    EXPLOSER LES HELICES.
+
+
+   BIEN VOUS AVEZ COMPRIS,
+    ALORS AU BOULOT AGENT HILLER!"""
+  scrolly=self.display.get_height()
+  showingsplash=True
+  while showingsplash:
+   self.display.blit(self.background,(0,0))
+   self.font.draw_text(texte,self.display,-64,scrolly)
+   pygame.display.flip()
+   if scrolly>24:
+    scrolly-=1
+   for event in pygame.event.get():
+    if event.type==pygame.QUIT:
+     pygame.quit()
+     sys.exit()
+    if event.type==pygame.KEYDOWN:
+     showingsplash=False
+    if event.type==pygame.MOUSEBUTTONDOWN:
+     showingsplash=False
+   self.clock.tick(60)
+  self.font=Font((255,0,255),(255,255,255),32,32)
+   
+  
  def update(self):
   if self.player not in self.entities:
    self.gameover=True
