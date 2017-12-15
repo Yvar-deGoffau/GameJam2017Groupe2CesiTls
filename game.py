@@ -588,18 +588,18 @@ class Player(Entity):
   self.steptime=0
   self.lastdir=4
  def update(self):
-  if pygame.key.get_pressed()[pygame.K_UP]:
+  if pygame.key.get_pressed()[pygame.K_UP] or pygame.key.get_pressed()[pygame.K_z] or pygame.key.get_pressed()[pygame.K_w]:
    self.dy=-4
    self.imgnow="player-n"
-  elif pygame.key.get_pressed()[pygame.K_DOWN]:
+  elif pygame.key.get_pressed()[pygame.K_DOWN] or pygame.key.get_pressed()[pygame.K_s]:
    self.dy=4
    self.imgnow="player-s"
   else:
    self.dy=0
-  if pygame.key.get_pressed()[pygame.K_LEFT]:
+  if pygame.key.get_pressed()[pygame.K_LEFT] or pygame.key.get_pressed()[pygame.K_q] or pygame.key.get_pressed()[pygame.K_a]:
    self.dx=-4
    self.imgnow="player-w"
-  elif pygame.key.get_pressed()[pygame.K_RIGHT]:
+  elif pygame.key.get_pressed()[pygame.K_RIGHT] or pygame.key.get_pressed()[pygame.K_d]:
    self.dx=4
    self.imgnow="player-e"
   else:
