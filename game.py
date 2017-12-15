@@ -647,11 +647,31 @@ class Box(Entity):
  def update(self):
   if self.x-self.width/2-self.app.player.width<self.app.player.x<self.x+self.width/2+self.app.player.width:
    if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
-    self.app.player.bullets+=random.randint(4,8)
+    score=random.randint(4,8)
+    self.app.player.bullets+=score
+    self.app.entities.append(BoxText(self.app,self.x,self.y,score))
     self.app.entities.remove(self) 
  def draw(self):
   pygame.transform.scale(self.app.gfx["box"],self.surface.get_size(),self.surface)
-  
+
+class BoxText(Entity):
+ def init(self,x,y,score):
+  self.text="+"+str(score)
+  self.width=32*len(self.text)
+  self.height=32
+  self.x=x
+  self.y=y
+  self.dx=0
+  self.dy=-1
+  self.spawntime=pygame.time.get_ticks()
+ def update(self):
+  self.x+=self.dx
+  self.y+=self.dy
+  if pygame.time.get_ticks()-self.spawntime>1000:
+   self.app.entities.remove(self)
+ def draw(self):
+  self.app.font.draw_text(self.text,self.surface,0,0)
+
 class Player(Entity):
  def init(self,x,y):
   self.x=x
