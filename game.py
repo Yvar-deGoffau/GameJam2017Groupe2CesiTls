@@ -573,7 +573,50 @@ class Exit(Entity):
     self.app.difficulty=True
  def draw(self):
   pygame.transform.scale(self.app.gfx["exit"],self.surface.get_size(),self.surface)
-    
+
+class Font:
+ TABSIZE=8
+ def __init__(self,bgcol,fgcol,width=8,height=8):
+  self.width=width
+  self.height=height
+  self.font={}
+  font=open(os.path.join("Grafix","font.bin"),"rb")
+  letter=0
+  for i in range(96):
+   s=pygame.Surface((8,8))
+   s.fill((255,0,255))
+   s2=pygame.Surface((8,8))
+   s2.fill((255,0,255))
+   for j in range(8):
+    v=font.read(1)
+    if len(v)==0:
+     break
+    byte=ord(v)
+    for k in range(8):
+     if byte&1:
+      s.set_at((7-k,j),fgcol)
+      s2.set_at((7-k+1,j+1),(127,127,127))
+     byte>>=1
+   s2=pygame.transform.scale(s2,(width,height))
+   s=pygame.transform.scale(s,(width,height))
+   s2.set_colorkey((255,0,255))
+   s.set_colorkey((255,0,255))
+   s2.blit(s,(0,0))
+   self.font[chr(i+32)]=s2
+ def draw_text(self,text,surface,x,y):
+   xpos=x
+   ypos=y
+   for letter in text:
+    if letter=="\n":
+     xpos=x
+     ypos+=self.height
+    elif letter=="\t":
+     xchr=(xpos-x)/self.width
+     xpos+=(self.TABSIZE-(xchr%self.TABSIZE))*self.width
+    elif letter in self.font:
+     surface.blit(self.font[letter],(xpos,ypos))
+     xpos+=self.width
+     
 class Bullet(Entity):
  def init(self,x,y,dx,dy):
   self.width=self.height=8
@@ -665,7 +708,7 @@ class Application:
   self.olddisplaysize=(WIDTH,HEIGHT)
   self.unset_fullscreen()
   self.clock=pygame.time.Clock()
-  self.font=pygame.font.Font(pygame.font.get_default_font(),40)
+  self.font=Font((255,0,255),(255,255,255),32,32)
   self.snd_shoot=pygame.mixer.Sound(os.path.join("Sounds","Shoot.wav"))
  def init(self):
   self.scrollx=self.scrolly=0
@@ -746,8 +789,8 @@ class Application:
   else:
    value=float(pygame.time.get_ticks()-self.target.destructionstart-self.target.waittime)/self.target.killtime
    self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
-  txt=self.font.render(str(self.player.bullets),True,(255,255,255))
-  self.display.blit(txt,(16,self.display.get_height()-txt.get_height()-16))
+  txt=str(self.player.bullets)
+  self.font.draw_text(txt,self.display,8,8)
  def render(self):
   self.display.blit(self.background,(self.scrollx%self.gfx["floor"].get_width(),self.scrolly%self.gfx["floor"].get_height()))
   for entity in self.entities:
