@@ -656,11 +656,11 @@ class Application:
   self.olddisplaysize=(WIDTH,HEIGHT)
   self.unset_fullscreen()
   self.clock=pygame.time.Clock()
+  self.gameover=False
   self.snd_shoot=pygame.mixer.Sound(os.path.join("Sounds","Shoot.wav"))
   self.show_splash()
  def init(self):
   self.scrollx=self.scrolly=0
-  self.gameover=False
   self.entities=Level().level1(self)
  def set_fullscreen(self):
   self.olddisplaysize=self.display.get_size()
