@@ -452,7 +452,10 @@ class Target(Entity):
   self.destructionstart=0
   self.destructionmode=False
   self.waittime=5000
-  self.killtime=25000
+  if self.app.difficulty:
+   self.killtime=25000
+  else:
+   self.killtime=35000
  def update(self):
   if not self.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
