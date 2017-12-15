@@ -103,6 +103,9 @@ class Entity:
   self.app=app     #  keep reference to application
   self.redraw=True #  if we need to redraw the sprite
   self.vision=0    #  the field of vision of the guardians
+  self.imgwidth=None
+  self.imgheight=None
+
   self.init(*args) #  send the other arguments for the init
  def init(self):   # run the instance-specific init code
   pass
@@ -111,8 +114,12 @@ class Entity:
  def draw(self):
   pass
  def render(self): # executed once per frame to render the sprite
+  if self.imgwidth==None:
+   self.imgwidth=int(self.width)
+  if self.imgheight==None:
+   self.imgheight=int(self.height)
   if self.redraw:  #  if we need to redraw the sprite
-   self.surface=pygame.Surface((self.width,self.height)) #   then create a new surface for it
+   self.surface=pygame.Surface((self.imgwidth,self.imgheight)) #   then create a new surface for it
    self.surface.fill((0,0,0))
    self.draw()     #  execute the instance-specific drawing code
    self.surface.set_colorkey((0,0,0))
@@ -128,6 +135,7 @@ class HGuard(Entity):
   self.y=y
   self.starty=y
   self.width=self.height=16
+  self.imgwidth=self.imgheight=32
   self.vision=128
   self.awake=False
   self.speedasleep=1.5
@@ -139,6 +147,9 @@ class HGuard(Entity):
   self.afterbullet=0
   self.reload=pygame.time.get_ticks()
   self.traceback=[]
+  self.lastdir=0
+  self.steptime=0
+  self.steptick=pygame.time.get_ticks()
  def update(self):
   self.checkplayer()
   if not self.awake and self.traceback==[]:
@@ -152,6 +163,7 @@ class HGuard(Entity):
    self.goafterplayer()
   self.x+=self.dx
   self.y+=self.dy
+  self.remake_draw()
  def checkplayer(self):
    # look how far away the player is
   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
@@ -220,15 +232,22 @@ class HGuard(Entity):
  def shoot(self):
   self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
   self.reload=pygame.time.get_ticks()
+ def remake_draw(self):
+  direction=math.atan2(self.dy,self.dx)
+  direction/=math.pi
+  direction=int(direction*4)
+  direction%=8
+  if direction!=self.lastdir:
+   self.lastdir=direction
+   self.redraw=True
+  if pygame.time.get_ticks()-self.steptick>(1.0/(self.dx**2+self.dy**2))*400:
+   self.steptime+=1
+   self.steptick=pygame.time.get_ticks()
+   self.redraw=True
  def draw(self):
-  if self.awake:
-   color=(255,0,0)
-  else:
-   color=(127,0,0)
-  pygame.draw.circle(self.surface,color,(8,8),8)
-  surface=pygame.Surface((16,16),pygame.SRCALPHA)
-  pygame.draw.circle(surface,(0,0,0,127),(8,8),8)
-  self.surface.blit(surface,(4,4))
+  imglist=["guard-e","guard-se","guard-s","guard-sw","guard-w","guard-nw","guard-n","guard-ne"]
+  img=self.app.gfx[imglist[self.lastdir]+str((self.steptime%4)+1)]
+  pygame.transform.scale(img,self.surface.get_size(),self.surface)
 
 
 class VGuard(Entity):
@@ -239,6 +258,7 @@ class VGuard(Entity):
   self.x=x
   self.startx=x
   self.width=self.height=16
+  self.imgwidth=self.imgheight=32
   self.vision=128
   self.awake=False
   self.speedasleep=1.5
@@ -250,6 +270,9 @@ class VGuard(Entity):
   self.afterbullet=0
   self.reload=pygame.time.get_ticks()
   self.traceback=[]
+  self.lastdir=0
+  self.steptime=0
+  self.steptick=pygame.time.get_ticks()
  def update(self):
   self.checkplayer()
   if not self.awake and self.traceback==[]:
@@ -263,6 +286,7 @@ class VGuard(Entity):
    self.goafterplayer()
   self.x+=self.dx
   self.y+=self.dy
+  self.remake_draw()
  def checkplayer(self):
    # look how far away the player is
   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
@@ -331,15 +355,22 @@ class VGuard(Entity):
  def shoot(self):
   self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
   self.reload=pygame.time.get_ticks()
+ def remake_draw(self):
+  direction=math.atan2(self.dy,self.dx)
+  direction/=math.pi
+  direction=int(direction*4)
+  direction%=8
+  if direction!=self.lastdir:
+   self.lastdir=direction
+   self.redraw=True
+  if pygame.time.get_ticks()-self.steptick>(1.0/(self.dx**2+self.dy**2))*400:
+   self.steptime+=1
+   self.steptick=pygame.time.get_ticks()
+   self.redraw=True
  def draw(self):
-  if self.awake:
-   color=(255,0,0)
-  else:
-   color=(127,0,0)
-  pygame.draw.circle(self.surface,color,(8,8),8)
-  surface=pygame.Surface((16,16),pygame.SRCALPHA)
-  pygame.draw.circle(surface,(0,0,0,127),(8,8),8)
-  self.surface.blit(surface,(4,4))
+  imglist=["guard-e","guard-se","guard-s","guard-sw","guard-w","guard-nw","guard-n","guard-ne"]
+  img=self.app.gfx[imglist[self.lastdir]+str((self.steptime%4)+1)]
+  pygame.transform.scale(img,self.surface.get_size(),self.surface)
 
 
 class Nazi(Entity):  # the guardians that goes after you
@@ -648,6 +679,7 @@ class Application:
   for event in pygame.event.get():
    if event.type==pygame.VIDEORESIZE:
     pygame.display.set_mode(event.size,pygame.RESIZABLE)
+    self.prepare_gfx()
    if event.type==pygame.QUIT:
     pygame.quit()
     sys.exit()
