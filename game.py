@@ -96,6 +96,19 @@ class Level:
    app.player,
    ]
 
+ def level2(self,app):
+  Z=24
+  app.player=Player(app,20*Z,8*Z)
+  app.target=Target(app,120*Z,4*Z)
+  return [
+    #les murs
+
+    #les autres choses
+   Exit(app,20*Z,8*Z),
+   app.target,
+   app.player,
+   ]
+
 class Entity:
  def __init__(self,app,*args):
   self.solid=False
@@ -482,7 +495,7 @@ class Font:
   self.width=width
   self.height=height
   self.font={}
-  font=open(os.path.join("Grafix","font.bin"),"rb")
+  font=open(os.path.join("Images","font.bin"),"rb")
   letter=0
   for i in range(96):
    s=pygame.Surface((8,8))
@@ -551,14 +564,14 @@ class Box(Entity):
    if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
     score=random.randint(4,8)
     self.app.player.bullets+=score
-    self.app.entities.append(BoxText(self.app,self.x,self.y,score))
+    self.app.entities.append(BoxText(self.app,self.x,self.y,"+"+str(score)))
     self.app.entities.remove(self) 
  def draw(self):
   pygame.transform.scale(self.app.gfx["box"],self.surface.get_size(),self.surface)
 
 class BoxText(Entity):
  def init(self,x,y,score):
-  self.text="+"+str(score)
+  self.text=score
   self.width=32*len(self.text)
   self.height=32
   self.x=x
@@ -657,9 +670,9 @@ class Application:
   self.prepare_gfx()
  def prepare_gfx(self):
   self.gfx={}
-  for f in os.listdir("Grafix"):
+  for f in os.listdir("Images"):
    try:
-    img=pygame.image.load(os.path.join("Grafix",f)).convert()
+    img=pygame.image.load(os.path.join("Images",f)).convert()
     self.gfx[f.split(".")[0]]=img
    except pygame.error:
     pass
@@ -729,6 +742,9 @@ class Application:
    self.gameover=True
   if self.gameover:
    self.init()
+   if self.difficulty==True:
+    txt="HARD MODE ENABLED"
+    self.entities.append(BoxText(self,self.player.x-64,self.player.y-24,txt))
   for event in pygame.event.get():
    if event.type==pygame.VIDEORESIZE:
     pygame.display.set_mode(event.size,pygame.RESIZABLE)
@@ -802,6 +818,7 @@ class Application:
   #pygame.display.set_caption("fps:"+str(self.clock.get_fps()))
  def run(self):
   self.init()
+  self.gameover=True
   time=1
   while 1:
    for i in range(int(time)+1):
