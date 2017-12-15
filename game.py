@@ -865,7 +865,10 @@ class Application:
     self.display.fill((0,127,0),(0,0,int(self.display.get_width()*value),16))
   else:
    value=float(pygame.time.get_ticks()-self.target.destructionstart-self.target.waittime)/self.target.killtime
-   self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
+   #self.display.fill((127,0,0),(0,0,int(self.display.get_width()*value),16))
+   timebeforedie=self.target.killtime-(pygame.time.get_ticks()-self.target.destructionstart-self.target.waittime)
+   timebeforedie=int(timebeforedie/1000)
+   self.font.draw_text("EXPLOSION IN "+str(timebeforedie)+" SECONDS",self.display,8,self.display.get_height()-32)
   txt=str(self.player.bullets)
   self.font.draw_text(txt,self.display,8,8)
  def render(self):
