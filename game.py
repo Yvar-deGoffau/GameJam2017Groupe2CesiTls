@@ -136,7 +136,10 @@ class HGuard(Entity):
   self.starty=y
   self.width=self.height=16
   self.imgwidth=self.imgheight=32
-  self.vision=128
+  if self.app.difficulty:
+   self.vision=128
+  else:
+   self.vision=96
   self.awake=False
   self.speedasleep=1.5
   self.dx=(random.randint(0,1)*2-1)*self.speedasleep
@@ -259,7 +262,10 @@ class VGuard(Entity):
   self.startx=x
   self.width=self.height=16
   self.imgwidth=self.imgheight=32
-  self.vision=128
+  if self.app.difficulty:
+   self.vision=128
+  else:
+   self.vision=96
   self.awake=False
   self.speedasleep=1.5
   self.dy=(random.randint(0,1)*2-1)*self.speedasleep
@@ -592,14 +598,14 @@ class Box(Entity):
  def init(self,x,y):
   self.x=x
   self.y=y
-  self.width=self.height=16
+  self.width=self.height=32
  def update(self):
   if self.x-self.width/2-self.app.player.width<self.app.player.x<self.x+self.width/2+self.app.player.width:
    if self.y-self.height/2-self.app.player.height<self.app.player.y<self.y+self.height/2+self.app.player.height:
     self.app.player.bullets+=random.randint(4,8)
     self.app.entities.remove(self) 
  def draw(self):
-  self.surface.blit(self.app.gfx["box"],(0,0))
+  pygame.transform.scale(self.app.gfx["box"],self.surface.get_size(),self.surface)
   
 class Player(Entity):
  def init(self,x,y):
@@ -648,6 +654,7 @@ HEIGHT=768
 
 class Application:
  def __init__(self):
+  self.difficulty=False
   self.entities=[]
   pygame.init()
   self.displayinfo=pygame.display.Info()
@@ -748,7 +755,7 @@ class Application:
      pygame.draw.circle(surface,(255,255,0,127),(entity.vision,entity.vision),entity.vision,0)
     else:
      pygame.draw.circle(surface,(127,127,0,127),(entity.vision,entity.vision),entity.vision,0)
-    self.display.blit(surface,(self.scrollx+int(entity.x-entity.vision),self.scrolly+int(entity.y-entity.vision)))
+    self.display.blit(surface,(self.scrollx+int(entity.x-entity.vision+entity.width/2),self.scrolly+int(entity.y-entity.vision+entity.height/2)))
   for entity in self.entities:
    surface=entity.render()
    self.display.blit(surface,(self.scrollx+(entity.x-entity.width/2),self.scrolly+(entity.y-entity.height/2)))
