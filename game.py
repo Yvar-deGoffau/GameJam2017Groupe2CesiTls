@@ -380,105 +380,6 @@ class VGuard(Entity):
   pygame.transform.scale(img,self.surface.get_size(),self.surface)
 
 
-class Nazi(Entity):  # the guardians that goes after you
- def init(self,x,y):  # initialize the nazi
-  self.x=x            #  register our start position
-  self.y=y
-  self.dx=self.dy=0   #  the horizontal and vertical speed
-  self.dir=random.random()*math.pi*2  # the direction
-  self.width=self.height=16 #  width and height
-  self.awake=False    #  if we are chasing a player
-  self.vision=144
-  self.speedawake=2.0
-  self.speedasleep=1.5
-  #  the field of vision
-  self.lastawake=0    #  the last time that we were awaken
- def update(self):
-   # look how far away the player is
-  distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
-   # if we see the player
-  if distance<self.vision**2:
-    # if we were patrolling
-   if self.awake==False:
-      #  fire a redraw
-    self.redraw=True
-    # keep awake
-   self.awake=True
-   self.lastawake=pygame.time.get_ticks()
-    # test if there are any other guards near to awaken
-   for entity in self.app.entities:
-    if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
-     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-     if distance<(self.vision+entity.vision)**2: # if he is close enough
-      entity.awake=True  #  awaken him
-      entity.lastawake=self.lastawake
-      entity.redraw=True
-  elif self.awake:
-   if pygame.time.get_ticks()-self.lastawake>3000:
-    self.awake=False
-    self.redraw=True
-  if not self.awake:
-   self.dir+=(random.random()*2-1)/8
-   for entity in self.app.entities:
-    if entity.isbullet: # if a bullet is flying by
-     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-     if distance<self.vision**2: # if it is close enough
-      self.dir=math.atan2(entity.dy,entity.dx) # look what is happening here
-  else:
-   x=self.x-self.app.player.x
-   y=self.y-self.app.player.y
-   self.dir=math.atan2(y,x)
-   if not random.randint(0,64):
-    self.shoot()
-  self.dx=math.cos(self.dir)
-  self.dy=math.sin(self.dir)
-  if self.awake:
-   self.dx*=self.speedawake
-   self.dy*=self.speedawake
-  else:
-   self.dx*=self.speedasleep
-   self.dy*=self.speedasleep
-  self.x-=self.dx
-  self.y-=self.dy
- def shoot(self):
-  self.app.entities.append(Bullet(self.app,self.x,self.y,-self.dx*8,-self.dy*8))
- def draw(self):
-  if self.awake:
-   self.surface.fill((255,0,0))
-  else:
-   self.surface.fill((127,0,0))
-
-
-class Wall(Entity):
- def init(self,x,y,width,height):
-  self.x=x+width/2
-  self.y=y+height/2
-  self.width=width
-  self.height=height
-  self.solid=True
- def update(self):
-  for entity in self.app.entities:
-   if entity.solid:
-    continue
-   if self.x-(entity.width+self.width/2)<entity.x<self.x+self.width/2+entity.width:
-    if self.y-(entity.height+self.height/2)<entity.y<self.y+self.height/2+entity.height:
-     if entity.isbullet:
-      self.app.entities.remove(entity)
-      return
-     if self.width<self.height:
-      if entity.x<self.x:
-       entity.x=self.x-(entity.width)-8
-      if entity.x>self.x:
-       entity.x=self.x+(entity.width)+8
-     else:
-      if entity.y<self.y:
-       entity.y=self.y-(entity.height)-8
-      if entity.y>self.y:
-       entity.y=self.y+(entity.height)+8
- def draw(self):
-  self.surface.fill((127,127,127))
-
-
 class HWall(Entity):
  def init(self,x1,y,x2):
   self.thickness=16
@@ -685,6 +586,7 @@ class Player(Entity):
   self.imgnow="player-w"
   self.steptick=pygame.time.get_ticks()
   self.steptime=0
+  self.lastdir=4
  def update(self):
   if pygame.key.get_pressed()[pygame.K_UP]:
    self.dy=-4
@@ -706,13 +608,22 @@ class Player(Entity):
   self.y+=self.dy
   self.remake_draw()
  def remake_draw(self):
-  if self.dx!=0 or self.dy!=0:
-   if pygame.time.get_ticks()-self.steptick>(1.0/(self.dx**2+self.dy**2))*400:
-    self.steptime+=1
-    self.steptick=pygame.time.get_ticks()
-    self.redraw=True
+  if self.dx==0 and self.dy==0:
+   return
+  direction=math.atan2(self.dy,self.dx)
+  direction/=math.pi
+  direction=int(direction*4)
+  direction%=8
+  if direction!=self.lastdir:
+   self.lastdir=direction
+   self.redraw=True
+  if pygame.time.get_ticks()-self.steptick>100:
+   self.steptime+=1
+   self.steptick=pygame.time.get_ticks()
+   self.redraw=True
  def draw(self):
-  img=self.app.gfx[self.imgnow+str((self.steptime%4)+1)]
+  imglist=["player-e","player-se","player-s","player-sw","player-w","player-nw","player-n","player-ne"]
+  img=self.app.gfx[imglist[self.lastdir]+str((self.steptime%4)+1)]
   pygame.transform.scale(img,self.surface.get_size(),self.surface)
 
 WIDTH=1024
