@@ -113,7 +113,9 @@ class Entity:
  def render(self): # executed once per frame to render the sprite
   if self.redraw:  #  if we need to redraw the sprite
    self.surface=pygame.Surface((self.width,self.height)) #   then create a new surface for it
+   self.surface.fill((0,0,0))
    self.draw()     #  execute the instance-specific drawing code
+   self.surface.set_colorkey((0,0,0))
    self.redraw=False  #   and the redraw is now done
   return self.surface #  return our (newly-drawn or not) sprite
 
@@ -220,9 +222,13 @@ class HGuard(Entity):
   self.reload=pygame.time.get_ticks()
  def draw(self):
   if self.awake:
-   self.surface.fill((255,0,0))
+   color=(255,0,0)
   else:
-   self.surface.fill((127,0,0))
+   color=(127,0,0)
+  pygame.draw.circle(self.surface,color,(8,8),8)
+  surface=pygame.Surface((16,16),pygame.SRCALPHA)
+  pygame.draw.circle(surface,(0,0,0,127),(8,8),8)
+  self.surface.blit(surface,(4,4))
 
 
 class VGuard(Entity):
@@ -327,9 +333,13 @@ class VGuard(Entity):
   self.reload=pygame.time.get_ticks()
  def draw(self):
   if self.awake:
-   self.surface.fill((255,0,0))
+   color=(255,0,0)
   else:
-   self.surface.fill((127,0,0))
+   color=(127,0,0)
+  pygame.draw.circle(self.surface,color,(8,8),8)
+  surface=pygame.Surface((16,16),pygame.SRCALPHA)
+  pygame.draw.circle(surface,(0,0,0,127),(8,8),8)
+  self.surface.blit(surface,(4,4))
 
 
 class Nazi(Entity):  # the guardians that goes after you
@@ -454,6 +464,7 @@ class HWall(Entity):
       entity.y=self.y+(entity.height)+8
  def draw(self):
   self.surface.fill((127,127,127))
+  self.surface.fill((191,191,191),(0,0,self.surface.get_width(),6))
   
 class VWall(Entity):
  def init(self,x,y1,y2):
@@ -478,6 +489,7 @@ class VWall(Entity):
       entity.x=self.x+(entity.width)+8
  def draw(self):
   self.surface.fill((127,127,127))
+  self.surface.fill((191,191,191),(0,0,6,self.surface.get_height()))
 
 class Target(Entity):
  def init(self,x,y):
@@ -542,7 +554,7 @@ class Bullet(Entity):
      if entity.y-entity.height/2<self.y<entity.y+entity.height/2:
       self.app.entities.remove(entity)
  def draw(self):
-  self.surface.fill((127,127,127))
+  pygame.draw.circle(self.surface,(127,127,127),(4,4),4)
 
 class Box(Entity):
  def init(self,x,y):
@@ -556,6 +568,7 @@ class Box(Entity):
     self.app.entities.remove(self) 
  def draw(self):
   self.surface.fill((127,0,255))
+  self.surface.fill((63,0,127),(4,4,16,16))
   
 class Player(Entity):
  def init(self,x,y):
@@ -581,7 +594,11 @@ class Player(Entity):
   self.x+=self.dx
   self.y+=self.dy
  def draw(self):
-  self.surface.fill((255,255,255))
+  pygame.draw.circle(self.surface,(255,255,255),(8,8),8)
+  surface=pygame.Surface((16,16),pygame.SRCALPHA)
+  pygame.draw.circle(surface,(0,0,0,127),(8,8),8)
+  self.surface.blit(surface,(4,4))
+  #self.surface.fill((255,255,255))
 
 WIDTH=1024
 HEIGHT=768
@@ -679,13 +696,18 @@ class Application:
   self.render_statusbar()
   pygame.display.flip()
   self.clock.tick(60)
-  pygame.display.set_caption("bullets left:"+str(self.player.bullets))
+  #pygame.display.set_caption("fps:"+str(self.clock.get_fps()))
  def run(self):
   self.init()
+  time=1
   while 1:
-   self.update()
+   for i in range(int(time)):
+    self.update()
+   oldtime=pygame.time.get_ticks()
    self.render()
-   
+   newtime=pygame.time.get_ticks()
+   time=1000.0/(newtime-oldtime)
+   time=60.0/time
    
 if __name__=="__main__":
  try:
