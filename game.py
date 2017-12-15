@@ -519,7 +519,8 @@ class Target(Entity):
    self.redraw=True
     
  def draw(self):
-  self.surface.fill((0,127,0))
+  pygame.transform.scale(self.app.gfx["target"],self.surface.get_size(),self.surface)
+    
   
 
 class Exit(Entity):
