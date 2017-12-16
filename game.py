@@ -2,6 +2,12 @@
 import pygame,random,math,os,sys
 
 class Level:
+ def __init__(self):
+  self.level=-2
+  self.levels=[self.level1,self.level2]
+ def getNextLevel(self,app):
+  self.level+=1
+  return self.levels[self.level%len(self.levels)](app)
  def level1(self,app):
   Z=24
   app.player=Player(app,20*Z,8*Z)
@@ -98,13 +104,119 @@ class Level:
 
  def level2(self,app):
   Z=24
-  app.player=Player(app,20*Z,8*Z)
-  app.target=Target(app,120*Z,4*Z)
+  app.player=Player(app,2*Z,2*Z)
+  app.target=Target(app,107*Z,59*Z)
   return [
     #les murs
+   HWall(app,  0*Z, 0*Z, 13*Z),
+   HWall(app, 25*Z, 0*Z,132*Z),
+   VWall(app,  0*Z, 0*Z,  8*Z),
+   VWall(app,  0*Z,26*Z, 64*Z),
+   VWall(app,132*Z, 0*Z, 64*Z),
+   HWall(app,  0*Z,64*Z, 14*Z),
+   HWall(app, 40*Z,64*Z, 60*Z),
+   HWall(app, 90*Z,64*Z,132*Z),
+   HWall(app,  0*Z, 8*Z,  8*Z),
+   VWall(app,  8*Z, 8*Z, 26*Z),
+   HWall(app,  0*Z,26*Z,  8*Z),
+   VWall(app, 13*Z, 0*Z, 18*Z),
+   HWall(app, 13*Z,18*Z, 25*Z),
+   VWall(app, 25*Z, 0*Z, 18*Z),
+   HWall(app, 13*Z,22*Z, 25*Z),
+   VWall(app, 13*Z,22*Z, 38*Z),
+   VWall(app, 25*Z,22*Z, 38*Z),
+   HWall(app, 13*Z,38*Z, 25*Z),
+   HWall(app,  0*Z,53*Z, 10*Z),
+   VWall(app,  7*Z,58*Z, 64*Z),
+   VWall(app, 14*Z,50*Z, 64*Z),
+   HWall(app, 14*Z,50*Z, 40*Z),
+   VWall(app, 40*Z,50*Z, 64*Z),
+   VWall(app, 32*Z, 0*Z, 12*Z),
+   HWall(app, 32*Z,12*Z, 36*Z),
+   HWall(app, 41*Z,12*Z, 46*Z),
+   VWall(app, 46*Z, 0*Z, 12*Z),
+   HWall(app, 32*Z,18*Z, 47*Z),
+   VWall(app, 32*Z,18*Z, 21*Z),
+   VWall(app, 32*Z,26*Z, 33*Z),
+   HWall(app, 32*Z,33*Z, 47*Z),
+   VWall(app, 47*Z,18*Z, 20*Z),
+   VWall(app, 47*Z,24*Z, 33*Z),
+   VWall(app, 60*Z,50*Z, 64*Z),
+   HWall(app, 60*Z,50*Z, 90*Z),
+   VWall(app, 90*Z,50*Z, 64*Z),
+   HWall(app, 62*Z,13*Z, 66*Z),
+   VWall(app, 62*Z,13*Z, 23*Z),
+   HWall(app, 62*Z,23*Z, 66*Z),
+   HWall(app, 70*Z,13*Z, 74*Z),
+   VWall(app, 74*Z,13*Z, 23*Z),
+   HWall(app, 70*Z,23*Z, 74*Z),
+   HWall(app, 62*Z,34*Z, 66*Z),
+   VWall(app, 62*Z,34*Z, 44*Z),
+   HWall(app, 62*Z,44*Z, 66*Z),
+   HWall(app, 70*Z,34*Z, 74*Z),
+   VWall(app, 74*Z,34*Z, 44*Z),
+   HWall(app, 70*Z,44*Z, 74*Z),
+   HWall(app, 90*Z,16*Z,103*Z),
+   VWall(app, 90*Z,16*Z, 44*Z),
+   HWall(app, 90*Z,44*Z,123*Z),
+   VWall(app,103*Z,16*Z, 64*Z),
+   HWall(app,126*Z,44*Z,132*Z),
+   HWall(app,103*Z,53*Z,120*Z),
+   VWall(app,124*Z,53*Z, 64*Z),
+   VWall(app, 96*Z, 0*Z, 10*Z),
+   VWall(app,115*Z, 0*Z,  3*Z),
+   VWall(app,115*Z, 6*Z, 12*Z),
+   HWall(app,115*Z,12*Z,122*Z),
+   HWall(app,126*Z,12*Z,132*Z),
+
+    #les guardiens
+   HGuard(app, 13*Z,19*Z, 24*Z),
+   VGuard(app,  3*Z,29*Z, 51*Z),
+   VGuard(app, 11*Z,47*Z, 61*Z),
+   HGuard(app, 13*Z,44*Z, 42*Z),
+   VGuard(app, 28*Z, 2*Z, 18*Z),
+   VGuard(app, 38*Z, 3*Z, 15*Z),
+   HGuard(app, 28*Z,23*Z, 36*Z),
+   HGuard(app, 43*Z,21*Z, 53*Z),
+   HGuard(app, 41*Z,15*Z, 59*Z),
+   VGuard(app, 49*Z,25*Z, 50*Z),
+   VGuard(app, 42*Z,45*Z, 61*Z),
+   VGuard(app, 55*Z,45*Z, 61*Z),
+   VGuard(app, 58*Z,23*Z, 42*Z),
+   HGuard(app, 49*Z, 6*Z, 65*Z),
+   VGuard(app, 68*Z, 7*Z, 12*Z),
+   VGuard(app, 68*Z,21*Z, 35*Z),
+   VGuard(app, 68*Z,42*Z, 48*Z),
+   VGuard(app, 77*Z,21*Z, 35*Z),
+   VGuard(app, 85*Z,21*Z, 35*Z),
+   HGuard(app, 84*Z,47*Z, 99*Z),
+   VGuard(app, 93*Z,49*Z, 61*Z),
+   HGuard(app, 84*Z,13*Z,107*Z),
+   HGuard(app,103*Z, 4*Z,117*Z),
+   VGuard(app,124*Z, 8*Z, 15*Z),
+   HGuard(app,105*Z,23*Z,129*Z),
+   HGuard(app,105*Z,27*Z,129*Z),
+   HGuard(app,105*Z,31*Z,129*Z),
+   HGuard(app,105*Z,35*Z,129*Z),
+   HGuard(app,105*Z,39*Z,129*Z),
+   HGuard(app,105*Z,42*Z,129*Z),
+   HGuard(app,105*Z,47*Z,129*Z),
+   HGuard(app,105*Z,50*Z,118*Z),
+   VGuard(app,126*Z,50*Z, 61*Z),
+
+    #les boites
+   Box(app,  3*Z,62*Z),
+   Box(app, 34*Z, 2*Z),
+   Box(app, 44*Z, 2*Z),
+   Box(app, 45*Z,31*Z),
+   Box(app, 64*Z,17*Z),
+   Box(app, 64*Z,40*Z),
+   Box(app, 96*Z,62*Z),
+   Box(app,130*Z, 2*Z),
+   Box(app,130*Z,62*Z),
 
     #les autres choses
-   Exit(app,20*Z,8*Z),
+   Exit(app,2*Z,2*Z),
    app.target,
    app.player,
    ]
@@ -145,7 +257,7 @@ class HGuard(Entity):
  def init(self,x1,y,x2):
   self.x1=min(x1,x2)
   self.x2=max(x1,x2)
-  self.x=(x1+x2)/2
+  self.x=random.randint(self.x1,self.x2)
   self.y=y
   self.starty=y
   self.width=self.height=16
@@ -271,7 +383,7 @@ class VGuard(Entity):
  def init(self,x,y1,y2):
   self.y1=min(y1,y2)
   self.y2=max(y1,y2)
-  self.y=(y1+y2)/2
+  self.y=random.randint(self.y1,self.y2)
   self.x=x
   self.startx=x
   self.width=self.height=16
@@ -447,7 +559,7 @@ class Target(Entity):
  def init(self,x,y):
   self.x=x
   self.y=y
-  self.width=self.height=32
+  self.width=self.height=64
   self.solid=True
   self.destructionstart=0
   self.destructionmode=False
@@ -648,7 +760,7 @@ HEIGHT=768
 class Application:
  def __init__(self):
   self.difficulty=False
-  self.entities=[]
+  self.entities=[] 
   pygame.init()
   self.displayinfo=pygame.display.Info()
   self.videowidth=self.displayinfo.current_w
@@ -657,10 +769,12 @@ class Application:
   self.unset_fullscreen()
   self.clock=pygame.time.Clock()
   self.snd_shoot=pygame.mixer.Sound(os.path.join("Sounds","Shoot.wav"))
+  self.levels=Level()
   self.show_splash()
  def init(self):
   self.scrollx=self.scrolly=0
-  self.entities=Level().level1(self)
+  self.entities=self.levels.getNextLevel(self)
+  self.difficulty=self.levels.level/len(self.levels.levels)
   self.gameover=False
  def set_fullscreen(self):
   self.olddisplaysize=self.display.get_size()
