@@ -547,8 +547,8 @@ class VGuard(Entity):
 class HWall(Entity):
  def init(self,x1,y,x2):
   self.thickness=16
-  self.width=abs(x2-x1)
-  self.x=min(x1,x2)+self.width/2+self.thickness/2
+  self.width=abs(x2-x1)+self.thickness
+  self.x=min(x1,x2)+self.width/2-self.thickness/2
   self.x1=min(x1,x2)
   self.x2=max(x1,x2)
   self.y=y
@@ -612,7 +612,7 @@ class HWall(Entity):
    (self.x2-x+vision,self.y-y+vision)))
 
  def draw(self):
-  for i in range(self.surface.get_width()/16):
+  for i in range(self.surface.get_width()/16+1):
    self.surface.blit(self.app.gfx["wall-h"],(i*16,0))
   
 
@@ -621,7 +621,7 @@ class VWall(Entity):
   self.thickness=16
   self.height=abs(y2-y1)
   self.x=x
-  self.y=min(y1,y2)+self.height/2+self.thickness/2
+  self.y=min(y1,y2)+self.height/2
   self.width=self.thickness
   self.solid=True
   self.iswall=True
@@ -675,7 +675,7 @@ class VWall(Entity):
    (self.x-x+vision,self.y2-y+vision)))
 
  def draw(self):
-  for i in range(self.surface.get_height()/16):
+  for i in range(self.surface.get_height()/16+1):
    self.surface.blit(self.app.gfx["wall-v"],(0,i*16))
 
 class Target(Entity):
@@ -921,6 +921,13 @@ class Application:
   for y in range(self.background.get_height()/floor.get_height()):
    for x in range(self.background.get_width()/floor.get_width()):
     self.background.blit(floor,(x*floor.get_width(),y*floor.get_height()))
+  self.vision128awake=pygame.Surface((255,255),pygame.SRCALPHA)
+  self.vision128asleep=pygame.Surface((255,255),pygame.SRCALPHA)
+  self.vision128awake.fill((0,0,0,0))
+  self.vision128asleep.fill((0,0,0,0))
+  for i in range(128):
+   pygame.draw.circle(self.vision128awake,(255,255,0,i*2),(128,128),128-i,0)
+   pygame.draw.circle(self.vision128asleep,(255,255,0,i),(128,128),128-i,0)
  def show_splash(self):
   self.font=Font((255,0,255),(255,255,255),24,24)
   texte="""
@@ -1046,23 +1053,27 @@ class Application:
   txt=str(self.player.bullets)
   self.font.draw_text(txt,self.display,8,8)
  def render(self):
-  self.display.blit(self.background,(self.scrollx%self.gfx["floor"].get_width(),self.scrolly%self.gfx["floor"].get_height()))
+  self.display.blit(self.background,(self.scrollx%self.gfx["floor"].get_width()-8,self.scrolly%self.gfx["floor"].get_height()-8))
   for entity in self.entities:
    if entity.vision:
-    surface=pygame.Surface((entity.vision*2,entity.vision*2),pygame.SRCALPHA)
-    surface.fill((0,0,0,0))
+    #surface=pygame.Surface((entity.vision*2,entity.vision*2),pygame.SRCALPHA)
+    #surface.fill((0,0,0,0))
     if entity.awake:
-     pygame.draw.circle(surface,(255,255,0,127),(entity.vision,entity.vision),entity.vision,0)
+     #for i in range(entity.vision):
+     # pygame.draw.circle(surface,(255,255,0,i),(entity.vision,entity.vision),128-i,0)
+     surface=self.vision128awake.copy()
     else:
-     pygame.draw.circle(surface,(127,127,0,127),(entity.vision,entity.vision),entity.vision,0)
+     #for i in range(entity.vision):
+     # pygame.draw.circle(surface,(127,127,0,i),(entity.vision,entity.vision),128-i,0)
+     surface=self.vision128asleep.copy()
     for element in self.entities:
      if element.iswall and element.is_near(entity.x,entity.y,entity.vision):
       element.block_vision(surface,entity.x,entity.y,entity.vision)
     entity.lightning=surface
-    self.display.blit(surface,(self.scrollx+int(entity.x-entity.vision+entity.width/2),self.scrolly+int(entity.y-entity.vision+entity.height/2)))
+    self.display.blit(surface,(self.scrollx+int(entity.x-entity.vision),self.scrolly+int(entity.y-entity.vision)))
   for entity in self.entities:
    surface=entity.render()
-   self.display.blit(surface,(self.scrollx+(entity.x-entity.width/2),self.scrolly+(entity.y-entity.height/2)))
+   self.display.blit(surface,(self.scrollx+(entity.x-entity.imgwidth/2),self.scrolly+(entity.y-entity.imgheight/2)))
   self.render_statusbar()
   pygame.display.flip()
   self.clock.tick(60)
