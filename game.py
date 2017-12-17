@@ -1,12 +1,46 @@
 # -*- coding: cp1252 -*-
 import pygame,random,math,os,sys
 
+
+def find_intersection( p0, p1, p2, p3 ) :
+# https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+    s10_x = p1[0] - p0[0]
+    s10_y = p1[1] - p0[1]
+    s32_x = p3[0] - p2[0]
+    s32_y = p3[1] - p2[1]
+
+    denom = s10_x * s32_y - s32_x * s10_y
+
+    if denom == 0 : return None # collinear
+
+    denom_is_positive = denom > 0
+
+    s02_x = p0[0] - p2[0]
+    s02_y = p0[1] - p2[1]
+
+    s_numer = s10_x * s02_y - s10_y * s02_x
+
+    if (s_numer < 0) == denom_is_positive : return None # no collision
+
+    t_numer = s32_x * s02_y - s32_y * s02_x
+
+    if (t_numer < 0) == denom_is_positive : return None # no collision
+
+    if (s_numer > denom) == denom_is_positive or (t_numer > denom) == denom_is_positive : return None # no collision
+
+
+    # collision detected
+
+    t = t_numer / denom
+
+    intersection_point = [ p0[0] + (t * s10_x), p0[1] + (t * s10_y) ]
+    return intersection_point
+
 class Level:
  def __init__(self):
   self.level=-2
   self.levels=[self.level1,self.level2]
  def getNextLevel(self,app):
-  self.level+=1
   return self.levels[self.level%len(self.levels)](app)
  def level1(self,app):
   Z=24
@@ -223,6 +257,7 @@ class Level:
 
 class Entity:
  def __init__(self,app,*args):
+  self.iswall=False
   self.solid=False
   self.isbullet=False
   self.dx=self.dy=0
@@ -297,7 +332,7 @@ class HGuard(Entity):
    # look how far away the player is
   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
    # if we see the player
-  if distance<self.vision**2:
+  if distance<self.vision**2 and self.app.can_see(self.x,self.y,self.app.player.x,self.app.player.y):  #if we can see him
     # if we were patrolling
    if self.awake==False:
       #  fire a redraw
@@ -310,9 +345,10 @@ class HGuard(Entity):
     if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
      distance=(self.x-entity.x)**2+(self.y-entity.y)**2
      if distance<(self.vision+entity.vision)**2: # if he is close enough
-      entity.awake=True  #  awaken him
-      entity.lastawake=self.lastawake
-      entity.redraw=True
+      if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
+       entity.awake=True  #  awaken him
+       entity.lastawake=self.lastawake
+       entity.redraw=True
  def goafterplayer(self):
   self.traceback.append((self.x,self.y))
   x=self.x-self.app.player.x
@@ -348,10 +384,11 @@ class HGuard(Entity):
    if entity.isbullet: # if a bullet is flying by
     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
     if distance<self.vision**2: # if it is close enough
-     self.direction=math.atan2(entity.dy,entity.dx)+math.pi
-     self.afterbullet=pygame.time.get_ticks()
-     self.goafterbullet()
-     return True
+     if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
+      self.direction=math.atan2(entity.dy,entity.dx)+math.pi
+      self.afterbullet=pygame.time.get_ticks()
+      self.goafterbullet()
+      return True
   return False
  def walk(self):
   if self.x<self.x1:
@@ -423,7 +460,7 @@ class VGuard(Entity):
    # look how far away the player is
   distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
    # if we see the player
-  if distance<self.vision**2:
+  if distance<self.vision**2 and self.app.can_see(self.x,self.y,self.app.player.x,self.app.player.y):  #if we can see him
     # if we were patrolling
    if self.awake==False:
       #  fire a redraw
@@ -436,9 +473,10 @@ class VGuard(Entity):
     if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
      distance=(self.x-entity.x)**2+(self.y-entity.y)**2
      if distance<(self.vision+entity.vision)**2: # if he is close enough
-      entity.awake=True  #  awaken him
-      entity.lastawake=self.lastawake
-      entity.redraw=True
+      if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
+       entity.awake=True  #  awaken him
+       entity.lastawake=self.lastawake
+       entity.redraw=True
  def goafterplayer(self):
   self.traceback.append((self.x,self.y))
   x=self.x-self.app.player.x
@@ -474,10 +512,11 @@ class VGuard(Entity):
    if entity.isbullet: # if a bullet is flying by
     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
     if distance<self.vision**2: # if it is close enough
-     self.direction=math.atan2(entity.dy,entity.dx)+math.pi
-     self.afterbullet=pygame.time.get_ticks()
-     self.goafterbullet()
-     return True
+     if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
+      self.direction=math.atan2(entity.dy,entity.dx)+math.pi
+      self.afterbullet=pygame.time.get_ticks()
+      self.goafterbullet()
+      return True
   return False
  def walk(self):
   if self.y<self.y1:
@@ -508,11 +547,14 @@ class VGuard(Entity):
 class HWall(Entity):
  def init(self,x1,y,x2):
   self.thickness=16
-  self.width=abs(x2-x1)+self.thickness
-  self.x=min(x1,x2)+self.width/2-self.thickness
-  self.y=y-self.thickness/2
+  self.width=abs(x2-x1)
+  self.x=min(x1,x2)+self.width/2+self.thickness/2
+  self.x1=min(x1,x2)
+  self.x2=max(x1,x2)
+  self.y=y
   self.height=self.thickness
   self.solid=True
+  self.iswall=True
  def update(self):
   for entity in self.app.entities:
    if entity.solid:
@@ -526,18 +568,65 @@ class HWall(Entity):
       entity.y=self.y-(entity.height)-8
      else:
       entity.y=self.y+(entity.height)+8
+ def is_near(self,x,y,vision):
+  if self.y<y-vision:
+   return False
+  if self.y>y+vision:
+   return False
+  if self.x2<x-vision:
+   return False
+  if self.x1>x+vision:
+   return False
+  if y==self.y:
+   return False
+  return True
+ 
+ def block_vision(self,surface,x,y,vision):
+  if self.y<y-vision:
+   return
+  if self.y>y+vision:
+   return
+  if self.x2<x-vision:
+   return
+  if self.x1>x+vision:
+   return
+  if y==self.y:
+   return
+  angle1=math.atan2(self.y-y,self.x1-x)
+  angle2=math.atan2(self.y-y,self.x2-x)
+  dist1=vision/math.sin(angle1)
+  dist2=vision/math.sin(angle2)
+  x3=math.cos(angle1)*abs(dist1)+x
+  x4=math.cos(angle2)*abs(dist2)+x
+  if self.y>y:
+   pygame.draw.polygon(surface,(0,0,0,0),(
+   (self.x1-x+vision,self.y-y+vision),
+   (x3-x+vision,vision*2),
+   (x4-x+vision,vision*2),
+   (self.x2-x+vision,self.y-y+vision)))
+  else:
+   pygame.draw.polygon(surface,(0,0,0,0),(
+   (self.x1-x+vision,self.y-y+vision),
+   (x3-x+vision,0),
+   (x4-x+vision,0),
+   (self.x2-x+vision,self.y-y+vision)))
+
  def draw(self):
   for i in range(self.surface.get_width()/16):
    self.surface.blit(self.app.gfx["wall-h"],(i*16,0))
   
+
 class VWall(Entity):
  def init(self,x,y1,y2):
   self.thickness=16
-  self.height=abs(y2-y1)+self.thickness
-  self.x=x-self.thickness/2
-  self.y=min(y1,y2)+self.height/2-self.thickness
+  self.height=abs(y2-y1)
+  self.x=x
+  self.y=min(y1,y2)+self.height/2+self.thickness/2
   self.width=self.thickness
   self.solid=True
+  self.iswall=True
+  self.y1=min(y1,y2)
+  self.y2=max(y1,y2)
  def update(self):
   for entity in self.app.entities:
    if entity.solid:
@@ -551,6 +640,40 @@ class VWall(Entity):
       entity.x=self.x-(entity.width)-8
      else:
       entity.x=self.x+(entity.width)+8
+
+ def is_near(self,x,y,vision):
+  if self.x<x-vision:
+   return False
+  if self.x>x+vision:
+   return False
+  if self.y2<y-vision:
+   return False
+  if self.y1>y+vision:
+   return False
+  if x==self.x:
+   return False
+  return True
+
+ def block_vision(self,surface,x,y,vision):
+  angle1=math.atan2(self.y1-y,self.x-x)
+  angle2=math.atan2(self.y2-y,self.x-x)
+  dist1=vision/math.cos(angle1)
+  dist2=vision/math.cos(angle2)
+  y3=math.sin(angle1)*abs(dist1)+y
+  y4=math.sin(angle2)*abs(dist2)+y
+  if self.x>x:
+   pygame.draw.polygon(surface,(0,0,0,0),(
+   (self.x-x+vision,self.y1-y+vision),
+   (vision*2,y3-y+vision),
+   (vision*2,y4-y+vision),
+   (self.x-x+vision,self.y2-y+vision)))
+  else:
+   pygame.draw.polygon(surface,(0,0,0,0),(
+   (self.x-x+vision,self.y1-y+vision),
+   (0,y3-y+vision),
+   (0,y4-y+vision),
+   (self.x-x+vision,self.y2-y+vision)))
+
  def draw(self):
   for i in range(self.surface.get_height()/16):
    self.surface.blit(self.app.gfx["wall-v"],(0,i*16))
@@ -600,7 +723,7 @@ class Exit(Entity):
   if self.app.target.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
     self.app.gameover=True
-    self.app.difficulty=True
+    self.app.levels.level+=1
  def draw(self):
   pygame.transform.scale(self.app.gfx["exit"],self.surface.get_size(),self.surface)
 
@@ -852,6 +975,13 @@ class Application:
    else:
     self.clock.tick(50)
   self.font=Font((255,0,255),(255,255,255),32,32)
+
+ def can_see(self,startx,starty,endx,endy):
+  for ele in self.entities:
+   if ele.iswall:
+    if find_intersection((startx,starty),(endx,endy),(ele.x-ele.width/2,ele.y-ele.height/2),(ele.x+ele.width/2,ele.y+ele.height/2)):
+     return False
+  return True
    
   
  def update(self):
@@ -925,6 +1055,10 @@ class Application:
      pygame.draw.circle(surface,(255,255,0,127),(entity.vision,entity.vision),entity.vision,0)
     else:
      pygame.draw.circle(surface,(127,127,0,127),(entity.vision,entity.vision),entity.vision,0)
+    for element in self.entities:
+     if element.iswall and element.is_near(entity.x,entity.y,entity.vision):
+      element.block_vision(surface,entity.x,entity.y,entity.vision)
+    entity.lightning=surface
     self.display.blit(surface,(self.scrollx+int(entity.x-entity.vision+entity.width/2),self.scrolly+int(entity.y-entity.vision+entity.height/2)))
   for entity in self.entities:
    surface=entity.render()
