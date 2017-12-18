@@ -38,7 +38,7 @@ def find_intersection( p0, p1, p2, p3 ) :
 
 class Level:
  def __init__(self):
-  self.level=-2
+  self.level=0
   self.levels=[self.level1,self.level2]
  def getNextLevel(self,app):
   return self.levels[self.level%len(self.levels)](app)
@@ -297,10 +297,10 @@ class HGuard(Entity):
   self.starty=y
   self.width=self.height=16
   self.imgwidth=self.imgheight=32
-  if self.app.difficulty:
-   self.vision=128
-  else:
-   self.vision=96
+  #if self.app.difficulty:
+  # self.vision=128
+  #else:
+  self.vision=96
   self.awake=False
   self.speedasleep=1.5
   self.dx=(random.randint(0,1)*2-1)*self.speedasleep
@@ -425,10 +425,10 @@ class VGuard(Entity):
   self.startx=x
   self.width=self.height=16
   self.imgwidth=self.imgheight=32
-  if self.app.difficulty:
-   self.vision=128
-  else:
-   self.vision=96
+  #if self.app.difficulty:
+  self.vision=128
+  #else:
+  # self.vision=96
   self.awake=False
   self.speedasleep=1.5
   self.dy=(random.randint(0,1)*2-1)*self.speedasleep
@@ -687,10 +687,10 @@ class Target(Entity):
   self.destructionstart=0
   self.destructionmode=False
   self.waittime=5000
-  if self.app.difficulty:
-   self.killtime=25000
-  else:
-   self.killtime=35000
+  #if self.app.difficulty:
+  # self.killtime=25000
+  #else:
+  self.killtime=35000
  def update(self):
   if not self.destructionmode:
    if self.x-(self.width/2+self.app.player.width)<self.app.player.x<self.x+(self.width/2+self.app.player.width) and self.y-(self.height/2+self.app.player.height)<self.app.player.y<self.y+(self.height/2+self.app.player.height):
@@ -996,9 +996,6 @@ class Application:
    self.gameover=True
   if self.gameover:
    self.init()
-   if self.difficulty==True:
-    txt="HARD MODE ENABLED"
-    self.entities.append(BoxText(self,self.player.x-64,self.player.y-24,txt))
   for event in pygame.event.get():
    if event.type==pygame.VIDEORESIZE:
     pygame.display.set_mode(event.size,pygame.RESIZABLE)
@@ -1039,6 +1036,7 @@ class Application:
    entity.update()
   self.scrollx=-self.player.x+self.display.get_width()/2
   self.scrolly=-self.player.y+self.display.get_height()/2
+
  def render_statusbar(self):
   if not self.target.destructionmode:
    if self.target.destructionstart!=0:
@@ -1052,6 +1050,9 @@ class Application:
    self.font.draw_text("EXPLOSION IN "+str(timebeforedie)+" SECONDS",self.display,8,self.display.get_height()-32)
   txt=str(self.player.bullets)
   self.font.draw_text(txt,self.display,8,8)
+  if self.difficulty==True:
+   txt="HARD MODE ENABLED"
+   self.font.draw_text(txt,self.display,self.display.get_width()-len(txt)*32-8,8)
  def render(self):
   self.display.blit(self.background,(self.scrollx%self.gfx["floor"].get_width()-8,self.scrolly%self.gfx["floor"].get_height()-8))
   for entity in self.entities:
