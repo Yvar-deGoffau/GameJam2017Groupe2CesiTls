@@ -298,9 +298,9 @@ class HGuard(Entity):
   self.width=self.height=16
   self.imgwidth=self.imgheight=32
   #if self.app.difficulty:
-  # self.vision=128
+  self.vision=128
   #else:
-  self.vision=96
+  #self.vision=96
   self.awake=False
   self.speedasleep=1.5
   self.dx=(random.randint(0,1)*2-1)*self.speedasleep
