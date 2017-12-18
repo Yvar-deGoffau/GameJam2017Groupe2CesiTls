@@ -261,6 +261,7 @@ class Entity:
   self.solid=False
   self.isbullet=False
   self.dx=self.dy=0
+  self.candestroy=True
   self.app=app     #  keep reference to application
   self.redraw=True #  if we need to redraw the sprite
   self.vision=0    #  the field of vision of the guardians
@@ -298,134 +299,6 @@ class Entity:
   return self.surface #  return our (newly-drawn or not) sprite
 
 
-class HGuard(Entity):
- def init(self,x1,y,x2):
-  self.width=self.height=16
-  self.x1=min(x1,x2)+self.width/2
-  self.x2=max(x1,x2)+self.width/2
-  self.x=random.randint(self.x1,self.x2)+self.width/2
-  self.y=y+self.height/2
-  self.starty=self.y
-  self.imgwidth=self.imgheight=32
-  #if self.app.difficulty:
-  self.vision=128
-  #else:
-  #self.vision=96
-  self.awake=False
-  self.speedasleep=1.5
-  self.dx=(random.randint(0,1)*2-1)*self.speedasleep
-  self.dy=0
-  self.speedawake=2.0
-  self.lastawake=0   
-  self.direction=0
-  self.afterbullet=0
-  self.reload=pygame.time.get_ticks()
-  self.traceback=[]
-  self.lastdir=0
-  self.steptime=0
-  self.steptick=pygame.time.get_ticks()
- def update(self):
-  self.checkplayer()
-  if not self.awake and self.traceback==[]:
-   if not self.checkbullet():
-    self.walk()
-  elif not self.awake and self.traceback!=[]:
-   self.x,self.y=self.traceback.pop(-1)
-   self.dx=(random.randint(0,1)*2-1)*self.speedasleep
-   self.dy=0
-  else:
-   self.goafterplayer()
-  self.x+=self.dx
-  self.y+=self.dy
-  self.remake_draw()
- def checkplayer(self):
-   # look how far away the player is
-  distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
-   # if we see the player
-  if distance<self.vision**2 and self.app.can_see(self.x,self.y,self.app.player.x,self.app.player.y):  #if we can see him
-    # if we were patrolling
-   if self.awake==False:
-      #  fire a redraw
-    self.redraw=True
-    # keep awake
-   self.awake=True
-   self.lastawake=pygame.time.get_ticks()
-    # test if there are any other guards near to awaken
-   for entity in self.app.entities:
-    if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
-     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-     if distance<(self.vision+entity.vision)**2: # if he is close enough
-      if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
-       entity.awake=True  #  awaken him
-       entity.lastawake=self.lastawake
-       entity.redraw=True
- def goafterplayer(self):
-  self.traceback.append((self.x,self.y))
-  x=self.x-self.app.player.x
-  y=self.y-self.app.player.y
-  self.dir=math.atan2(y,x)
-  if pygame.time.get_ticks()-self.reload>random.randint(500,1000):
-   self.shoot()
-  self.dx=-math.cos(self.dir)*self.speedawake
-  self.dy=-math.sin(self.dir)*self.speedawake
-  if pygame.time.get_ticks()-self.lastawake>3000:
-    self.awake=False
-    self.redraw=True
- def goafterbullet(self):
-  self.dx=math.cos(self.direction)*self.speedawake
-  self.dy=math.sin(self.direction)*self.speedawake
- def returnafterbullet(self):
-  self.dx=-math.cos(self.direction)*self.speedasleep
-  self.dy=-math.sin(self.direction)*self.speedasleep
- def checkbullet(self):
-  if self.afterbullet:
-   if pygame.time.get_ticks()-self.afterbullet>2000:
-    self.returnafterbullet()
-    if self.starty-self.width<self.y<self.starty+self.width:
-     self.afterbullet=0
-     self.y=self.starty
-     self.dy=0
-     self.dx=self.speedasleep
-     return False
-   else:
-    self.goafterbullet()
-   return True
-  for entity in self.app.entities:
-   if entity.isbullet: # if a bullet is flying by
-    distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-    if distance<self.vision**2: # if it is close enough
-     if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
-      self.direction=math.atan2(entity.dy,entity.dx)+math.pi
-      self.afterbullet=pygame.time.get_ticks()
-      self.goafterbullet()
-      return True
-  return False
- def walk(self):
-  if self.x<self.x1:
-   self.dx=self.speedasleep
-  elif self.x>self.x2:
-   self.dx=-self.speedasleep
- def shoot(self):
-  self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
-  self.reload=pygame.time.get_ticks()
- def remake_draw(self):
-  direction=math.atan2(self.dy,self.dx)
-  direction/=math.pi
-  direction=int(direction*4)
-  direction%=8
-  if direction!=self.lastdir:
-   self.lastdir=direction
-   self.redraw=True
-  if pygame.time.get_ticks()-self.steptick>(1.0/(self.dx**2+self.dy**2))*400:
-   self.steptime+=1
-   self.steptick=pygame.time.get_ticks()
-   self.redraw=True
- def draw(self):
-  imglist=["guard-e","guard-se","guard-s","guard-sw","guard-w","guard-nw","guard-n","guard-ne"]
-  img=self.app.gfx[imglist[self.lastdir]+str((self.steptime%4)+1)]
-  pygame.transform.scale(img,self.surface.get_size(),self.surface)
-
-
 class VGuard(Entity):
  def init(self,x,y1,y2):
   self.width=self.height=16
@@ -434,109 +307,78 @@ class VGuard(Entity):
   self.y=random.randint(self.y1,self.y2)+self.height/2
   self.x=x-self.width/2
   self.startx=x
-  self.imgwidth=self.imgheight=32
-  #if self.app.difficulty:
-  self.vision=128
-  #else:
-  # self.vision=96
-  self.awake=False
-  self.speedasleep=1.5
-  self.dy=(random.randint(0,1)*2-1)*self.speedasleep
   self.dx=0
-  self.speedawake=2.0
-  self.lastawake=0   
-  self.direction=0
-  self.afterbullet=0
-  self.reload=pygame.time.get_ticks()
-  self.traceback=[]
+  self.dy=0
+  self.imgwidth=self.imgheight=32
+  self.vision=128
+  self.following=self.app.player
+  self.trace=[(self.x,self.y1),]
+  self.awake=False
   self.lastdir=0
   self.steptime=0
+  self.speeds=[1.5,2.0]
+  self.reload=pygame.time.get_ticks()
   self.steptick=pygame.time.get_ticks()
+ def dohead(self,tracelist):
+  self.awake=True
+  if self.trace[0]==(self.startx,self.y2) or self.trace[0]==(self.startx,self.y1):
+   self.trace=[(self.x,self.y)]
+   self.reload=pygame.time.get_ticks()+random.randint(250,500)
+  self.trace.append((self.following.x,self.following.y))
+  tracelist.append(self)
+  for ele in self.app.entities:
+   if ele in tracelist:
+    continue
+   if not ele.vision:
+    continue
+   if (self.x-ele.x)**2+(self.y-ele.y)**2<self.vision**2+ele.vision**2 and self.app.can_see(self.x,self.y,ele.x,ele.y):
+    ele.dohead(tracelist)
+
+ def followbullet(self,bullet):
+  if self.trace[0]==(self.startx,self.y2) or self.trace[0]==(self.startx,self.y1):
+   self.trace=[(self.x,self.y)]
+   if self.app.difficulty:
+    self.trace.append((bullet.startx,bullet.starty))
+   else:
+    self.trace.append(((bullet.startx+bullet.x)/2,(bullet.starty+bullet.y)/2))
+   self.trace.append((bullet.x,bullet.y))
+
  def update(self):
-  self.checkplayer()
-  if not self.awake and self.traceback==[]:
-   if not self.checkbullet():
-    self.walk()
-  elif not self.awake and self.traceback!=[]:
-   self.x,self.y=self.traceback.pop(-1)
-   self.dy=(random.randint(0,1)*2-1)*self.speedasleep
-   self.dx=0
+  if len(self.trace)<2:
+   for ele in self.app.entities:
+    if ele.isbullet:
+     if (self.x-ele.x)**2+(self.y-ele.y)**2<self.vision**2 and self.app.can_see(self.x,self.y,ele.x,ele.y):
+      self.followbullet(ele)
+  if (self.x-self.following.x)**2+(self.y-self.following.y)**2<self.vision**2 and self.app.can_see(self.x,self.y,self.following.x,self.following.y):
+   self.dohead([])
   else:
-   self.goafterplayer()
+   while len(self.trace)>3 and self.app.can_see(self.trace[-1][0],self.trace[-1][1],*self.trace[-3]):
+    self.trace.pop(-2)
+   if (self.x-self.trace[-1][0])**2+(self.y-self.trace[-1][1])**2<self.width*self.height:
+    if len(self.trace)>1:
+     self.trace.pop(-1)
+     self.awake=False
+    else:
+     if abs(self.y-self.y1)<abs(self.y-self.y2):  #go to the nearest point of our line
+      self.trace=[(self.startx,self.y2),]
+     else:
+      self.trace=[(self.startx,self.y1),]
+  self.headingx=self.trace[-1][0]
+  self.headingy=self.trace[-1][1]
+  angle=math.atan2(self.headingy-self.y,self.headingx-self.x)
+  self.dx=math.cos(angle)*self.speeds[self.awake]
+  self.dy=math.sin(angle)*self.speeds[self.awake]
   self.x+=self.dx
   self.y+=self.dy
   self.remake_draw()
- def checkplayer(self):
-   # look how far away the player is
-  distance=(self.x-self.app.player.x)**2+(self.y-self.app.player.y)**2
-   # if we see the player
-  if distance<self.vision**2 and self.app.can_see(self.x,self.y,self.app.player.x,self.app.player.y):  #if we can see him
-    # if we were patrolling
-   if self.awake==False:
-      #  fire a redraw
-    self.redraw=True
-    # keep awake
-   self.awake=True
-   self.lastawake=pygame.time.get_ticks()
-    # test if there are any other guards near to awaken
-   for entity in self.app.entities:
-    if entity.vision>0 and entity.awake==False: # if we have to deal with an asleep guardian
-     distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-     if distance<(self.vision+entity.vision)**2: # if he is close enough
-      if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
-       entity.awake=True  #  awaken him
-       entity.lastawake=self.lastawake
-       entity.redraw=True
- def goafterplayer(self):
-  self.traceback.append((self.x,self.y))
-  x=self.x-self.app.player.x
-  y=self.y-self.app.player.y
-  self.dir=math.atan2(y,x)
-  if pygame.time.get_ticks()-self.reload>random.randint(500,1000):
+  if self.awake and pygame.time.get_ticks()-self.reload>500:
    self.shoot()
-  self.dx=-math.cos(self.dir)*self.speedawake
-  self.dy=-math.sin(self.dir)*self.speedawake
-  if pygame.time.get_ticks()-self.lastawake>3000:
-    self.awake=False
-    self.redraw=True
- def goafterbullet(self):
-  self.dx=math.cos(self.direction)*self.speedawake
-  self.dy=math.sin(self.direction)*self.speedawake
- def returnafterbullet(self):
-  self.dx=-math.cos(self.direction)*self.speedasleep
-  self.dy=-math.sin(self.direction)*self.speedasleep
- def checkbullet(self):
-  if self.afterbullet:
-   if pygame.time.get_ticks()-self.afterbullet>2000:
-    self.returnafterbullet()
-    if self.startx-self.height<self.x<self.startx+self.height:
-     self.afterbullet=0
-     self.x=self.startx
-     self.dx=0
-     self.dy=self.speedasleep
-     return False
-   else:
-    self.goafterbullet()
-   return True
-  for entity in self.app.entities:
-   if entity.isbullet: # if a bullet is flying by
-    distance=(self.x-entity.x)**2+(self.y-entity.y)**2
-    if distance<self.vision**2: # if it is close enough
-     if self.app.can_see(self.x,self.y,entity.x,entity.y):  #if we can see him
-      self.direction=math.atan2(entity.dy,entity.dx)+math.pi
-      self.afterbullet=pygame.time.get_ticks()
-      self.goafterbullet()
-      return True
-  return False
- def walk(self):
-  if self.y<self.y1:
-   self.dy=self.speedasleep
-  elif self.y>self.y2:
-   self.dy=-self.speedasleep
  def shoot(self):
   self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
-  self.reload=pygame.time.get_ticks()
+  self.reload=pygame.time.get_ticks()+random.randint(250,500)
  def remake_draw(self):
+  if self.dx==0 and self.dy==0:
+   return False
   direction=math.atan2(self.dy,self.dx)
   direction/=math.pi
   direction=int(direction*4)
@@ -554,6 +396,102 @@ class VGuard(Entity):
   pygame.transform.scale(img,self.surface.get_size(),self.surface)
 
 
+class HGuard(Entity):
+ def init(self,x1,y,x2):
+  self.width=self.height=16
+  self.x1=min(x1,x2)+self.width/2
+  self.x2=max(x1,x2)+self.width/2
+  self.x=random.randint(self.x1,self.x2)+self.width/2
+  self.y=y-self.height/2
+  self.starty=y
+  self.dx=0
+  self.dy=0
+  self.imgwidth=self.imgheight=32
+  self.vision=128
+  self.following=self.app.player
+  self.trace=[(self.x1,self.y),]
+  self.awake=False
+  self.lastdir=0
+  self.steptime=0
+  self.speeds=[1.5,2.0]
+  self.reload=pygame.time.get_ticks()
+  self.steptick=pygame.time.get_ticks()
+ def dohead(self,tracelist):
+  self.awake=True
+  if self.trace[0]==(self.x1,self.starty) or self.trace[0]==(self.x2,self.starty):
+   self.trace=[(self.x,self.y)]
+   self.reload=pygame.time.get_ticks()+random.randint(250,500)
+  self.trace.append((self.following.x,self.following.y))
+  tracelist.append(self)
+  for ele in self.app.entities:
+   if ele in tracelist:
+    continue
+   if not ele.vision:
+    continue
+   if (self.x-ele.x)**2+(self.y-ele.y)**2<self.vision**2+ele.vision**2 and self.app.can_see(self.x,self.y,ele.x,ele.y):
+    ele.dohead(tracelist)
+
+ def followbullet(self,bullet):
+  if self.trace[0]==(self.x1,self.starty) or self.trace[0]==(self.x2,self.starty):
+   self.trace=[(self.x,self.y)]
+   if self.app.difficulty:
+    self.trace.append((bullet.startx,bullet.starty))
+   else:
+    self.trace.append(((bullet.startx+bullet.x)/2,(bullet.starty+bullet.y)/2))
+   self.trace.append((bullet.x,bullet.y))
+
+ def update(self):
+  if len(self.trace)<2:
+   for ele in self.app.entities:
+    if ele.isbullet:
+     if (self.x-ele.x)**2+(self.y-ele.y)**2<self.vision**2 and self.app.can_see(self.x,self.y,ele.x,ele.y):
+      self.followbullet(ele)
+  if (self.x-self.following.x)**2+(self.y-self.following.y)**2<self.vision**2 and self.app.can_see(self.x,self.y,self.following.x,self.following.y):
+   self.dohead([])
+  else:
+   while len(self.trace)>3 and self.app.can_see(self.trace[-1][0],self.trace[-1][1],*self.trace[-3]):
+    self.trace.pop(-2)
+   if (self.x-self.trace[-1][0])**2+(self.y-self.trace[-1][1])**2<self.width*self.height:
+    if len(self.trace)>1:
+     self.trace.pop(-1)
+     self.awake=False
+    else:
+     if abs(self.x-self.x1)<abs(self.x-self.x2):  #go to the nearest point of our line
+      self.trace=[(self.x2,self.starty),]
+     else:
+      self.trace=[(self.x1,self.starty),]
+  self.headingx=self.trace[-1][0]
+  self.headingy=self.trace[-1][1]
+  angle=math.atan2(self.headingy-self.y,self.headingx-self.x)
+  self.dx=math.cos(angle)*self.speeds[self.awake]
+  self.dy=math.sin(angle)*self.speeds[self.awake]
+  self.x+=self.dx
+  self.y+=self.dy
+  self.remake_draw()
+  if self.awake and pygame.time.get_ticks()-self.reload>500:
+   self.shoot()
+ def shoot(self):
+  self.app.entities.append(Bullet(self.app,self.x,self.y,self.dx*8,self.dy*8))
+  self.reload=pygame.time.get_ticks()+random.randint(250,500)
+ def remake_draw(self):
+  if self.dx==0 and self.dy==0:
+   return False
+  direction=math.atan2(self.dy,self.dx)
+  direction/=math.pi
+  direction=int(direction*4)
+  direction%=8
+  if direction!=self.lastdir:
+   self.lastdir=direction
+   self.redraw=True
+  if pygame.time.get_ticks()-self.steptick>(1.0/(self.dx**2+self.dy**2))*400:
+   self.steptime+=1
+   self.steptick=pygame.time.get_ticks()
+   self.redraw=True
+ def draw(self):
+  imglist=["guard-e","guard-se","guard-s","guard-sw","guard-w","guard-nw","guard-n","guard-ne"]
+  img=self.app.gfx[imglist[self.lastdir]+str((self.steptime%4)+1)]
+  pygame.transform.scale(img,self.surface.get_size(),self.surface)
+
 class HWall(Entity):
  def init(self,x1,y,x2):
   self.thickness=16
@@ -561,6 +499,7 @@ class HWall(Entity):
   self.x=min(x1,x2)+self.width/2-self.thickness/2
   self.x1=min(x1,x2)
   self.x2=max(x1,x2)
+  self.candestroy=False
   self.y=y
   self.height=self.thickness
   self.solid=True
@@ -569,7 +508,7 @@ class HWall(Entity):
   for entity in self.app.entities:
    if entity.solid:
     continue
-   if self.x-(entity.width+self.width/2)<entity.x<self.x+self.width/2+entity.width:
+   if self.x-(self.width/2)<entity.x<self.x+self.width/2:
     if self.y-(entity.height+self.height/2)<entity.y<self.y+self.height/2+entity.height:
      if entity.isbullet:
       self.app.entities.remove(entity)
@@ -578,6 +517,8 @@ class HWall(Entity):
       entity.y=self.y-(entity.height)-8
      else:
       entity.y=self.y+(entity.height)+8
+     entity.awake=False
+
  def is_near(self,x,y,vision):
   if self.y<y-vision:
    return False
@@ -600,7 +541,7 @@ class HWall(Entity):
    return
   if self.x1>x+vision:
    return
-  if y==self.y:
+  if y-1<self.y<y+1:
    return
   angle1=math.atan2(self.y-y,self.x1-x)
   angle2=math.atan2(self.y-y,self.x2-x)
@@ -610,16 +551,16 @@ class HWall(Entity):
   x4=math.cos(angle2)*abs(dist2)+x
   if self.y>y:
    pygame.draw.polygon(surface,(0,0,0,0),(
-   (self.x1-x+vision,self.y-y+vision),
-   (x3-x+vision,vision*2),
-   (x4-x+vision,vision*2),
-   (self.x2-x+vision,self.y-y+vision)))
+   (int(self.x1-x+vision),int(self.y-y+vision)),
+   (int(x3-x+vision),int(vision*2)),
+   (int(x4-x+vision),int(vision*2)),
+   (int(self.x2-x+vision),int(self.y-y+vision))))
   else:
    pygame.draw.polygon(surface,(0,0,0,0),(
-   (self.x1-x+vision,self.y-y+vision),
-   (x3-x+vision,0),
-   (x4-x+vision,0),
-   (self.x2-x+vision,self.y-y+vision)))
+   (int(self.x1-x+vision),int(self.y-y+vision)),
+   (int(x3-x+vision),0),
+   (int(x4-x+vision),0),
+   (int(self.x2-x+vision),int(self.y-y+vision))))
 
  def draw(self):
   for i in range(self.surface.get_width()/16+1):
@@ -633,6 +574,7 @@ class VWall(Entity):
   self.x=x
   self.y=min(y1,y2)+self.height/2
   self.width=self.thickness
+  self.candestroy=False
   self.solid=True
   self.iswall=True
   self.y1=min(y1,y2)
@@ -642,7 +584,7 @@ class VWall(Entity):
    if entity.solid:
     continue
    if self.x-(entity.width+self.width/2)<entity.x<self.x+self.width/2+entity.width:
-    if self.y-(entity.height+self.height/2)<entity.y<self.y+self.height/2+entity.height:
+    if self.y-(self.height/2)<entity.y<self.y+self.height/2:
      if entity.isbullet:
       self.app.entities.remove(entity)
       return
@@ -650,6 +592,7 @@ class VWall(Entity):
       entity.x=self.x-(entity.width)-8
      else:
       entity.x=self.x+(entity.width)+8
+     entity.awake=False
 
  def is_near(self,x,y,vision):
   if self.x<x-vision:
@@ -660,7 +603,7 @@ class VWall(Entity):
    return False
   if self.y1>y+vision:
    return False
-  if x==self.x:
+  if x-1<self.x<x+1:
    return False
   return True
 
@@ -673,16 +616,16 @@ class VWall(Entity):
   y4=math.sin(angle2)*abs(dist2)+y
   if self.x>x:
    pygame.draw.polygon(surface,(0,0,0,0),(
-   (self.x-x+vision,self.y1-y+vision),
-   (vision*2,y3-y+vision),
-   (vision*2,y4-y+vision),
-   (self.x-x+vision,self.y2-y+vision)))
+   (int(self.x-x+vision),int(self.y1-y+vision)),
+   (int(vision*2),int(y3-y+vision)),
+   (int(vision*2),int(y4-y+vision)),
+   (int(self.x-x+vision),int(self.y2-y+vision))))
   else:
    pygame.draw.polygon(surface,(0,0,0,0),(
-   (self.x-x+vision,self.y1-y+vision),
-   (0,y3-y+vision),
-   (0,y4-y+vision),
-   (self.x-x+vision,self.y2-y+vision)))
+   (int(self.x-x+vision),int(self.y1-y+vision)),
+   (0,int(y3-y+vision)),
+   (0,int(y4-y+vision)),
+   (int(self.x-x+vision),int(self.y2-y+vision))))
 
  def draw(self):
   for i in range(self.surface.get_height()/16+1):
@@ -694,6 +637,7 @@ class Target(Entity):
   self.y=y
   self.width=self.height=64
   self.solid=True
+  self.candestroy=False
   self.destructionstart=0
   self.destructionmode=False
   self.waittime=5000
@@ -785,6 +729,8 @@ class Bullet(Entity):
   self.width=self.height=8
   self.x=x
   self.y=y
+  self.startx=self.x
+  self.starty=self.y
   self.dx=dx
   self.dy=dy
   self.isbullet=True
@@ -795,7 +741,7 @@ class Bullet(Entity):
   for entity in self.app.entities:
    if entity==self:
     continue
-   if not entity.solid:
+   if not entity.iswall:
     if entity.x-entity.width/2<self.x<entity.x+entity.width/2:
      if entity.y-entity.height/2<self.y<entity.y+entity.height/2:
       self.app.entities.remove(entity)
@@ -892,7 +838,6 @@ HEIGHT=768
 
 class Application:
  def __init__(self):
-  self.difficulty=False
   self.entities=[] 
   pygame.init()
   self.displayinfo=pygame.display.Info()
@@ -1090,15 +1035,15 @@ class Application:
   self.render_statusbar()
   pygame.display.flip()
   self.clock.tick(60)
-  #pygame.display.set_caption("fps:"+str(self.clock.get_fps()))
+  pygame.display.set_caption("fps:"+str(self.clock.get_fps()))
  def run(self):
   self.init()
   self.gameover=True
   time=1
   while 1:
+   oldtime=pygame.time.get_ticks()
    for i in range(int(time)+1):
     self.update()
-   oldtime=pygame.time.get_ticks()
    self.render()
    newtime=pygame.time.get_ticks()
    time=1000.0/(newtime-oldtime)
