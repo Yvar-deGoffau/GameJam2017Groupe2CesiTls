@@ -274,6 +274,16 @@ class Entity:
   pass
  def draw(self):
   pass
+ def in_zone(self,x,y,w,h):
+  if self.x<(x-w)-self.width:
+   return False
+  if self.y<(y-h)-self.height:
+   return False
+  if self.x>(x+w)+self.width:
+   return False
+  if self.y>(y+h)+self.height:
+   return False
+  return True
  def render(self): # executed once per frame to render the sprite
   if self.imgwidth==None:
    self.imgwidth=int(self.width)
@@ -290,12 +300,12 @@ class Entity:
 
 class HGuard(Entity):
  def init(self,x1,y,x2):
-  self.x1=min(x1,x2)
-  self.x2=max(x1,x2)
-  self.x=random.randint(self.x1,self.x2)
-  self.y=y
-  self.starty=y
   self.width=self.height=16
+  self.x1=min(x1,x2)+self.width/2
+  self.x2=max(x1,x2)+self.width/2
+  self.x=random.randint(self.x1,self.x2)+self.width/2
+  self.y=y+self.height/2
+  self.starty=self.y
   self.imgwidth=self.imgheight=32
   #if self.app.difficulty:
   self.vision=128
@@ -418,12 +428,12 @@ class HGuard(Entity):
 
 class VGuard(Entity):
  def init(self,x,y1,y2):
-  self.y1=min(y1,y2)
-  self.y2=max(y1,y2)
-  self.y=random.randint(self.y1,self.y2)
-  self.x=x
-  self.startx=x
   self.width=self.height=16
+  self.y1=min(y1,y2)+self.height/2
+  self.y2=max(y1,y2)+self.height/2
+  self.y=random.randint(self.y1,self.y2)+self.height/2
+  self.x=x-self.width/2
+  self.startx=x
   self.imgwidth=self.imgheight=32
   #if self.app.difficulty:
   self.vision=128
@@ -1056,6 +1066,8 @@ class Application:
  def render(self):
   self.display.blit(self.background,(self.scrollx%self.gfx["floor"].get_width()-8,self.scrolly%self.gfx["floor"].get_height()-8))
   for entity in self.entities:
+   if not entity.in_zone(self.player.x,self.player.y,self.display.get_width(),self.display.get_height()):
+    continue
    if entity.vision:
     #surface=pygame.Surface((entity.vision*2,entity.vision*2),pygame.SRCALPHA)
     #surface.fill((0,0,0,0))
